@@ -464,22 +464,22 @@
                 <p>Online Asset Logbook, Fleet Status Tracking & Service History Records</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-success" onclick="linkDatabaseFile()">📂 Open / Link Database File</button>
+                <button class="btn btn-success" onclick="fetchCloudDatabase()">🔄 Reload from Cloud</button>
             </div>
         </header>
 
-        <div class="db-status-banner" id="dbStatusBanner" style="background: #fee2e2; border-color: #fecaca; color: #991b1b;">
+        <div class="db-status-banner" id="dbStatusBanner" style="background: #fef3c7; border-color: #fcd34d; color: #92400e;">
             <div>
-                <strong>Auto-Save Engine Status:</strong> 
-                <span id="dbStatusLabel">Locked. No file connected.</span>
+                <strong>Cloud Sync Engine Status:</strong> 
+                <span id="dbStatusLabel">Connecting to JSONbin.io...</span>
             </div>
         </div>
 
         <div class="page-freeze-overlay" id="freezeOverlay">
             <div class="freeze-notice-box">
                 <h3>🔒 Access Frozen</h3>
-                <p>The Master Fleet Registry is empty and the dashboard controls are disabled because a local database file has not been linked yet.</p>
-                <button class="btn btn-success" onclick="linkDatabaseFile()">📂 Select JSON Database File</button>
+                <p>Establishing secure backend connection to the cloud registry server...</p>
+                <button class="btn btn-success" onclick="fetchCloudDatabase()">🔄 Retry Connection</button>
             </div>
         </div>
 
@@ -718,6 +718,11 @@
 </div>
 
 <script>
+    // Configuration details for JSONbin Cloud
+    const BIN_ID = '6a3617d8da38895dfee149a4';
+    const MASTER_KEY = '$2a$10$fJvvrO8GBTQ3bKX.I/wMAON0wdnPJbJyJJps./SG1YPK9XzQfllrq';
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
     let databaseState = {
         master_assets_registry: {},
         global_status_store: {},
@@ -725,31 +730,37 @@
     };
     
     let activeEquipmentId = '';
-    let fileHandle = null; 
+    let isConnected = false;
 
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('logDate').valueAsDate = new Date();
         document.getElementById('appContent').style.display = 'block';
         clearMainDashboardDisplay();
-        updateStatusBanner();
+        fetchCloudDatabase();
     });
 
-    function updateStatusBanner() {
+    function updateStatusBanner(customText = "", isError = false) {
         const banner = document.getElementById('dbStatusBanner');
         const label = document.getElementById('dbStatusLabel');
         const overlay = document.getElementById('freezeOverlay');
         
-        if (!fileHandle) {
+        if (isError) {
             banner.style.background = "#fee2e2";
             banner.style.borderColor = "#fecaca";
             banner.style.color = "#991b1b";
-            label.innerHTML = `⚠️ <strong>Page Locked:</strong> Connection required. Click "Open / Link Database File" above to load data and unlock the dashboard.`;
+            label.innerHTML = `⚠️ <strong>Sync Error:</strong> ${customText}`;
+            overlay.style.display = 'flex';
+        } else if (!isConnected) {
+            banner.style.background = "#fef3c7";
+            banner.style.borderColor = "#fcd34d";
+            banner.style.color = "#92400e";
+            label.innerHTML = `🔄 <strong>Status:</strong> Connecting to JSONbin.io Cloud Database...`;
             overlay.style.display = 'flex';
         } else {
             banner.style.background = "#f0fdf4";
             banner.style.borderColor = "#bbf7d0";
             banner.style.color = "#166534";
-            label.innerHTML = `⚡ <strong>Real-Time File Sync Engaged!</strong> Connected to file: <strong style="color:#166534;">${fileHandle.name}</strong>. All data changes are auto-saved in the background instantly.`;
+            label.innerHTML = `⚡ <strong>Real-Time Cloud Sync Engaged!</strong> Connected to Bin ID: <strong style="color:#166534;">${BIN_ID}</strong>. ${customText || 'All data changes are auto-saved to the cloud instantly.'}`;
             overlay.style.display = 'none';
         }
     }
@@ -760,58 +771,61 @@
             selectEquipment(activeEquipmentId || remainingKeys[0]);
         } else {
             clearMainDashboardDisplay();
+            renderMasterRegistryTable();
         }
     }
 
-    async function linkDatabaseFile() {
+    async function fetchCloudDatabase() {
+        isConnected = false;
+        updateStatusBanner();
         try {
-            const pickerOptions = {
-                types: [{
-                    description: 'JSON Database Files',
-                    accept: { 'application/json': ['.json'] }
-                }],
-                excludeAcceptAllOption: false,
-                multiple: false
+            const response = await fetch(API_URL, {
+                method: 'GET',
+                headers: {
+                    'X-Master-Key': MASTER_KEY
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP status processing fault: ${response.status}`);
+
+            const result = await response.json();
+            const parsed = result.record || {};
+            
+            databaseState = {
+                master_assets_registry: parsed.master_assets_registry || {},
+                global_status_store: parsed.global_status_store || {},
+                historical_logs_store: parsed.historical_logs_store || {}
             };
 
-            [fileHandle] = await window.showOpenFilePicker(pickerOptions);
-            const file = await fileHandle.getFile();
-            const contents = await file.text();
-            
-            if (contents.trim() === "") {
-                databaseState = { master_assets_registry: {}, global_status_store: {}, historical_logs_store: {} };
-            } else {
-                const parsed = JSON.parse(contents);
-                databaseState = {
-                    master_assets_registry: parsed.master_assets_registry || {},
-                    global_status_store: parsed.global_status_store || {},
-                    historical_logs_store: parsed.historical_logs_store || {}
-                };
-            }
-
-            activeEquipmentId = '';
-            updateStatusBanner();
+            isConnected = true;
+            updateStatusBanner("Data downloaded cleanly from server cloud platform storage safely.");
             refreshSystemDashboardView();
         } catch (err) {
-            if (err.name !== 'AbortError') {
-                alert('⚠️ Initialization Error: ' + err.message);
-            }
+            console.error(err);
+            updateStatusBanner(`Could not download operational roster. Details: ${err.message}`, true);
         }
     }
 
     async function autoSaveToDisk() {
-        if (!fileHandle) return; 
+        if (!isConnected) return;
+        updateStatusBanner("Syncing changes with cloud pipeline container...");
         try {
-            const writableStream = await fileHandle.createWritable();
-            await writableStream.write(JSON.stringify(databaseState, null, 2));
-            await writableStream.close();
-            console.log("Database background auto-save sync complete.");
+            const response = await fetch(API_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': MASTER_KEY
+                },
+                body: JSON.stringify(databaseState)
+            });
+
+            if (!response.ok) throw new Error(`Server write pipeline failure status: ${response.status}`);
+            
+            console.log("Database background cloud auto-save sync complete.");
+            updateStatusBanner("Data saved and pushed successfully to your live JSONbin cloud state registry.");
         } catch (err) {
-            console.error("Auto-save failed to pipeline data to disk handle:", err);
-            if (err.name === 'NotAllowedError') {
-                fileHandle = null;
-                updateStatusBanner();
-            }
+            console.error("Auto-save sync payload to cloud failed:", err);
+            updateStatusBanner(`Auto-save update stream processing failed: ${err.message}`, true);
         }
     }
 
