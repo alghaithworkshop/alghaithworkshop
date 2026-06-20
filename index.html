@@ -6,360 +6,537 @@
     <title>Equipment Maintenance Management System</title>
     <style>
         :root {
-            --primary-color: #1e3a8a;
-            --secondary-color: #3b82f6;
-            --bg-color: #f8fafc;
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --secondary: #64748b;
+            --secondary-hover: #475569;
+            --bg: #f8fafc;
             --card-bg: #ffffff;
-            --text-color: #334155;
-            --border-color: #cbd5e1;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: var(--font);
+            background-color: var(--bg);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
-        }
-
-        /* ----------------------------------------------------
-           🔐 SECURITY GATE LOCK SCREEN OVERLAY STYLING
-           ---------------------------------------------------- */
-        #authOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #0f172a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .auth-card {
-            background: #ffffff;
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 380px;
-            text-align: center;
+            padding: 24px;
+            line-height: 1.5;
+            position: relative;
+            min-height: 100vh;
             box-sizing: border-box;
         }
 
-        .auth-card h2 {
-            margin-top: 0;
-            color: var(--primary-color);
-            font-size: 22px;
-            margin-bottom: 8px;
-        }
-
-        .auth-card p {
-            color: #64748b;
-            font-size: 13px;
-            margin-bottom: 24px;
-        }
-
-        .auth-error {
-            color: #ef4444;
-            font-size: 13px;
-            margin-top: 10px;
-            font-weight: 600;
-            display: none;
-        }
-
-        /* ----------------------------------------------------
-           MAIN APP CONTAINER DISPLAY LAYOUTS
-           ---------------------------------------------------- */
-        #appContent {
-            display: none; /* Revealed only upon valid authentication */
-        }
-
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
         header {
-            background-color: var(--primary-color);
+            background-color: var(--primary);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 24px 32px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 32px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.15);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            z-index: 1001;
         }
 
-        header h1 { margin: 0; font-size: 24px; }
-        header p { margin: 5px 0 0 0; opacity: 0.9; font-size: 14px; }
+        header h1 { 
+            margin: 0; 
+            font-size: 26px; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        header p { 
+            margin: 6px 0 0 0; 
+            color: #94a3b8;
+            font-size: 14px; 
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
 
         .grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 25px;
+            gap: 32px;
         }
 
-        @media (min-width: 992px) {
-            .grid { grid-template-columns: 1.2fr 1.8fr; }
+        @media (min-width: 1200px) {
+            .grid { grid-template-columns: 1fr 1.6fr; }
         }
 
         .card {
             background: var(--card-bg);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            border: 1px solid var(--border-color);
-            margin-bottom: 20px;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
         }
 
         .card h2 {
             margin-top: 0;
             font-size: 18px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-            color: var(--primary-color);
+            font-weight: 600;
+            color: var(--primary);
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-sizing: border-box;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2364748b" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 14px center;
+            padding-left: 42px;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .table-container {
             overflow-x: auto;
-            max-height: 450px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            max-height: 480px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             background: #fff;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 14px;
             text-align: left;
         }
 
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
         }
 
         th {
-            background-color: #f1f5f9;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 5;
         }
 
-        tr.clickable { cursor: pointer; }
-        tr.clickable:hover { background-color: #f8fafc; }
-        tr.selected { background-color: #e2e8f0 !important; font-weight: bold; }
+        tr.clickable { cursor: pointer; transition: background 0.15s ease; }
+        tr.clickable:hover { background-color: #f1f5f9; }
+        tr.selected { background-color: #eef2ff !important; color: #312e81; font-weight: 500; }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
+            margin-bottom: 6px;
+            font-weight: 500;
             font-size: 13px;
+            color: var(--primary-light);
         }
 
         input, textarea, select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             box-sizing: border-box;
             font-size: 14px;
+            color: var(--text-main);
             background-color: #fff;
+            transition: all 0.2s ease;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        textarea { resize: vertical; height: 60px; }
+        textarea { resize: vertical; height: 75px; }
 
         .btn {
-            background-color: var(--secondary-color);
+            background-color: var(--accent);
             color: white;
-            padding: 8px 12px;
+            padding: 10px 18px;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 13px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
         }
 
-        .btn:hover { background-color: #2563eb; }
-        .btn-success { background-color: #10b981; }
-        .btn-success:hover { background-color: #059669; }
-        .btn-danger { background-color: #ef4444; }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-warning { background-color: #f59e0b; color: white; }
-        .btn-warning:hover { background-color: #d97706; }
-        .btn-secondary { background-color: #64748b; }
-        .btn-secondary:hover { background-color: #475569; }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: var(--success-hover); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-warning { background-color: var(--warning); color: white; }
+        .btn-warning:hover { background-color: var(--warning-hover); }
+        .btn-secondary { background-color: var(--secondary); }
+        .btn-secondary:hover { background-color: var(--secondary-hover); }
 
         .btn-sm {
-            padding: 4px 8px;
-            font-size: 11px;
-            border-radius: 3px;
-            margin-right: 2px;
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+            margin-right: 4px;
         }
 
         .asset-summary {
-            background-color: #f1f5f9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
             font-size: 13px;
         }
+        .asset-summary div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .asset-summary strong {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-        /* Report Layout Styles */
+        .checklist-container {
+            background-color: #fafafa;
+            border: 1px dashed var(--border);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+        .checklist-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checklist-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+            height: 16px;
+            width: 16px;
+            accent-color: var(--accent);
+        }
+
         .report-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
             margin-top: 15px;
         }
         .report-stat-box {
             background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: var(--radius-md);
+        }
+        .report-stat-box label {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-bottom: 4px;
         }
         .report-stat-box div {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary-color);
-            margin-top: 5px;
-        }
-        .report-fault-list {
-            background-color: #fffef2;
-            border: 1px solid #fef08a;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 15px;
-            font-size: 13px;
-        }
-        .report-fault-list ul {
-            margin: 5px 0 0 0;
-            padding-left: 20px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
         }
 
         .badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-weight: 600;
             font-size: 11px;
             text-align: center;
         }
-        .badge-operational { background-color: #dcfce7; color: #166534; }
-        .badge-maintenance { background-color: #fef9c3; color: #854d0e; }
+        .badge-operational { background-color: #d1fae5; color: #065f46; }
+        .badge-maintenance { background-color: #fef3c7; color: #92400e; }
         .badge-down { background-color: #fee2e2; color: #991b1b; }
 
         .flex-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 12px;
+            gap: 12px;
+            margin-top: 16px;
             flex-wrap: wrap;
         }
 
         .modal {
             display: none;
             position: fixed;
-            z-index: 100;
+            z-index: 1100;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
         }
         .modal-content {
             background-color: #fff;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 8px;
+            margin: 5% auto;
+            padding: 28px;
+            border-radius: var(--radius-lg);
             width: 90%;
+            max-width: 480px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .db-status-banner {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .page-freeze-overlay {
+            position: absolute;
+            top: 240px; 
+            left: 24px;
+            right: 24px;
+            bottom: 24px;
+            background: rgba(248, 250, 252, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 100px;
+            border-radius: var(--radius-lg);
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .freeze-notice-box {
+            background: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            text-align: center;
             max-width: 450px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+        }
+        .freeze-notice-box h3 {
+            margin: 0 0 12px 0;
+            color: var(--primary);
+            font-size: 20px;
+        }
+        .freeze-notice-box p {
+            margin: 0 0 20px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .print-only-header { display: none; }
+        .print-only-signature { display: none; }
+        body.printing-registry .grid > div:last-child { display: none !important; }
+        body.printing-ledger .grid > div:first-child { display: none !important; }
+
+        @media print {
+            body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; font-size: 12px; }
+            header, #maintenanceForm, .flex-buttons, .card h2, .modal, .btn-sm, .search-container, .db-status-banner, .page-freeze-overlay { display: none !important; }
+            body.printing-registry th:last-child, body.printing-registry td:last-child { display: table-cell !important; }
+            body.printing-ledger th:last-child, body.printing-ledger td:last-child { display: none !important; }
+            .grid { display: block !important; }
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+            .table-container { max-height: none !important; overflow: visible !important; border: none !important; }
+            table { width: 100% !important; border: 1px solid #000 !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { border: 1px solid #000 !important; padding: 6px 8px !important; color: #000 !important; }
+            th { font-weight: bold !important; background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .badge { border: 1px solid #000 !important; background: transparent !important; color: #000 !important; padding: 2px 6px !important; border-radius: 4px !important; text-transform: uppercase; font-size: 10px !important; }
+            .print-only-header { display: block !important; margin-bottom: 20px; border-bottom: 3px double #000; padding-bottom: 10px; }
+            .print-only-header h1 { margin: 0 0 10px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .print-meta-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; font-size: 13px; }
+            
+            body.printing-ledger .print-only-signature {
+                display: block !important;
+                margin-top: 50px;
+                page-break-inside: avoid;
+            }
+            .signature-block {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 30px;
+            }
+            .signature-line {
+                width: 250px;
+                border-top: 1px solid #000;
+                text-align: center;
+                padding-top: 5px;
+                font-weight: 600;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div id="authOverlay">
-    <div class="auth-card">
-        <h2>System Authorization</h2>
-        <p>Enter administrative gateway access credentials.</p>
-        <div class="form-group" style="text-align: left;">
-            <label for="systemPassword">Password Key</label>
-            <input type="password" id="systemPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter') verifySecureAccess()">
-        </div>
-        <button class="btn btn-success" style="width: 100%; padding: 10px;" onclick="verifySecureAccess()">Unlock Database</button>
-        <div id="authErrorMessage" class="auth-error">❌ Incorrect System Key. Access Denied.</div>
-    </div>
-</div>
-
 <div id="appContent">
     <div class="container">
         <header>
             <div>
-                <h1>🛠️ Equipment Maintenance Management System</h1>
+                <h1>🛠️ Equipment Maintenance Management</h1>
                 <p>Online Asset Logbook, Fleet Status Tracking & Service History Records</p>
             </div>
-            <div>
-                <button class="btn btn-danger" onclick="executeLogout()">🔒 Logout</button>
+            <div class="header-actions">
+                <button class="btn btn-success" onclick="linkDatabaseFile()">📂 Open / Link Database File</button>
             </div>
         </header>
+
+        <div class="db-status-banner" id="dbStatusBanner" style="background: #fee2e2; border-color: #fecaca; color: #991b1b;">
+            <div>
+                <strong>Auto-Save Engine Status:</strong> 
+                <span id="dbStatusLabel">Locked. No file connected.</span>
+            </div>
+        </div>
+
+        <div class="page-freeze-overlay" id="freezeOverlay">
+            <div class="freeze-notice-box">
+                <h3>🔒 Access Frozen</h3>
+                <p>The Master Fleet Registry is empty and the dashboard controls are disabled because a local database file has not been linked yet.</p>
+                <button class="btn btn-success" onclick="linkDatabaseFile()">📂 Select JSON Database File</button>
+            </div>
+        </div>
 
         <div class="grid">
             <div>
                 <div class="card">
+                    <div class="print-only-header" id="printRegistryHeader">
+                        <h1>MASTER FLEET REGISTRY ROSTER REPORT</h1>
+                        <p style="margin: 0; font-size: 12px; font-weight: normal;">Generated on: <span id="printRegistryDate"></span></p>
+                    </div>
+
                     <h2>📋 Master Fleet Registry</h2>
+                    
+                    <div class="search-container">
+                        <input type="text" id="fleetSearchInput" onkeyup="filterFleetRegistry()" placeholder="Search ID, name, model, serial, or location...">
+                    </div>
+
                     <div class="table-container">
                         <table id="equipmentTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Equipment Name</th>
+                                    <th>Model No.</th>
                                     <th>Serial No.</th>
+                                    <th>Location</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="equipmentTableBody">
-                            </tbody>
+                            <tbody id="equipmentTableBody"></tbody>
                         </table>
                     </div>
                     
                     <div class="flex-buttons">
-                        <button class="btn btn-success" onclick="openFleetModal('add')">➕ Add New Equipment</button>
+                        <button class="btn btn-success" onclick="openFleetModal('add')">➕ Add New Entry</button>
                         <button class="btn btn-warning" onclick="openFleetModal('edit')">✏️ Edit Selected</button>
                         <button class="btn btn-danger" onclick="deleteEquipment()">🗑️ Delete Selected</button>
+                        <button class="btn btn-secondary" onclick="triggerRegistryPrint()">🖨️ Print Fleet Roster</button>
                     </div>
                 </div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <div class="card">
-                    <h2>➕ Record Log & Update Status: <span id="activeIdHeader">B1</span></h2>
+                    <h2>📝 Record Log & Update Status: <span id="activeIdHeader">-</span></h2>
                     <div class="asset-summary">
-                        <div><strong>Name:</strong> <span id="summaryName">-</span></div>
-                        <div><strong>Serial No:</strong> <span id="summarySerial">-</span></div>
-                        <div><strong>Current Status:</strong> <span id="summaryStatus">-</span></div>
+                        <div><strong>Equipment Name</strong> <span id="summaryName">-</span></div>
+                        <div><strong>Model No</strong> <span id="summaryModel">-</span></div>
+                        <div><strong>Serial No</strong> <span id="summarySerial">-</span></div>
+                        <div><strong>Location</strong> <span id="summaryLocation">-</span></div>
+                        <div><strong>Current Status</strong> <span id="summaryStatus">-</span></div>
                     </div>
 
                     <form id="maintenanceForm" onsubmit="saveLog(event)">
                         <input type="hidden" id="editingLogIndex" value="-1">
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div class="form-group">
                                 <label>Inspection Date</label>
                                 <input type="date" id="logDate" required>
@@ -374,42 +551,63 @@
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div class="form-group">
                                 <label>Current Hours Reading</label>
                                 <input type="number" step="0.1" id="currentHours" placeholder="Enter current running hours" required>
                             </div>
                             <div class="form-group">
                                 <label>Target Hour Maintenance</label>
-                                <input type="number" step="0.1" id="targetMaintenanceHours" placeholder="Enter planned target maintenance milestone" required>
+                                <input type="number" step="0.1" id="targetMaintenanceHours" placeholder="Enter planned maintenance milestone" required>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="checklist-container">
+                            <div class="checklist-title">🛠️ Preventive Maintenance Verification Checklist</div>
+                            <div class="checklist-grid">
+                                <label class="checklist-item">
+                                    <input type="checkbox" id="pmFluids" onchange="generateActionsFromChecklist()"> Fluid Levels Checked (Oil, Coolant)
+                                </label>
+                                <label class="checklist-item">
+                                    <input type="checkbox" id="pmFilters" onchange="generateActionsFromChecklist()"> Filters & Separators Cleaned
+                                </label>
+                                <label class="checklist-item">
+                                    <input type="checkbox" id="pmBelts" onchange="generateActionsFromChecklist()"> Belts, Hoses & Seals Verified
+                                </label>
+                                <label class="checklist-item">
+                                    <input type="checkbox" id="pmTorque" onchange="generateActionsFromChecklist()"> Structural Bolts Torqued
+                                </label>
+                                <label class="checklist-item">
+                                    <input type="checkbox" id="pmGauges" onchange="generateActionsFromChecklist()"> Pressure Gauges Calibrated
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
                             <div class="form-group">
                                 <label>Inspection Fault Report</label>
-                                <textarea id="faultReport" placeholder="Describe detected problems..."></textarea>
+                                <textarea id="faultReport" placeholder="Describe detected structural or functional issues..."></textarea>
                             </div>
                             <div class="form-group">
                                 <label>Service Performed / Action Taken</label>
-                                <textarea id="serviceAction" placeholder="Adjustments made, torque applied..."></textarea>
+                                <textarea id="serviceAction" placeholder="Adjustments made, system tasks completed..."></textarea>
                             </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                             <div class="form-group">
                                 <label>Parts Replaced</label>
                                 <input type="text" id="partsReplaced" placeholder="e.g., Gaskets, O-Rings, None">
                             </div>
                             <div class="form-group">
                                 <label>Technician Name</label>
-                                <input type="text" id="technician" placeholder="Sign-off field" required>
+                                <input type="text" id="technician" placeholder="Sign-off full name" required>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Remarks</label>
-                            <input type="text" id="remarks" placeholder="General operational notes">
+                            <input type="text" id="remarks" placeholder="General structural or operational notes">
                         </div>
 
                         <div class="flex-buttons" style="margin-top: 5px;">
@@ -420,7 +618,18 @@
                 </div>
 
                 <div class="card">
-                    <h2>🗓️ Historical Log Ledger: <span id="ledgerIdHeader">B1</span></h2>
+                    <div class="print-only-header" id="printLedgerHeader">
+                        <h1>EQUIPMENT MAINTENANCE HISTORICAL LEDGER</h1>
+                        <div class="print-meta-grid">
+                            <div><strong>Asset ID:</strong> <span id="printID">-</span></div>
+                            <div><strong>Equipment Name:</strong> <span id="printName">-</span></div>
+                            <div><strong>Model No:</strong> <span id="printModel">-</span></div>
+                            <div><strong>Serial Number:</strong> <span id="printSerial">-</span></div>
+                            <div><strong>Location:</strong> <span id="printLocation">-</span></div>
+                        </div>
+                    </div>
+
+                    <h2>🗓️ Historical Log Ledger: <span id="ledgerIdHeader">-</span></h2>
                     <div class="table-container">
                         <table id="historyTable">
                             <thead>
@@ -434,20 +643,27 @@
                                     <th>Parts Replaced</th>
                                     <th>Technician</th>
                                     <th>Remarks</th>
-                                    <th style="min-width: 110px; text-align: center;">Actions</th>
+                                    <th style="min-width: 140px; text-align: center;">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="historyTableBody">
-                            </tbody>
+                            <tbody id="historyTableBody"></tbody>
                         </table>
                     </div>
+
+                    <div class="print-only-signature">
+                        <div class="signature-block">
+                            <div class="signature-line">Supervisor Signature</div>
+                        </div>
+                    </div>
+
                     <div class="flex-buttons">
                         <button class="btn btn-secondary" onclick="exportCSV()">Export Selected Log to CSV</button>
+                        <button class="btn btn-warning" onclick="triggerLedgerPrint()">🖨️ Print Historical Ledger</button>
                     </div>
                 </div>
 
                 <div class="card">
-                    <h2>📊 Automated Maintenance Metrics Report: <span id="reportIdHeader">B1</span></h2>
+                    <h2>📊 Automated Maintenance Metrics Report: <span id="reportIdHeader">-</span></h2>
                     <div class="report-grid">
                         <div class="report-stat-box">
                             <label>Total Logged Events</label>
@@ -462,15 +678,7 @@
                             <div id="statAvgInterval">0.0 hrs</div>
                         </div>
                     </div>
-                    
-                    <div class="report-fault-list">
-                        <strong>⚠️ Historical Fault Report Summary Tracker:</strong>
-                        <div id="reportFaultTrackerContent" style="margin-top: 5px; color: #475569;">
-                            No historical logs found to generate anomaly summaries.
-                        </div>
-                    </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -478,7 +686,7 @@
 
 <div id="fleetModal" class="modal">
     <div class="modal-content">
-        <h3 id="modalTitle" style="margin-top: 0; color: var(--primary-color);">Add Equipment</h3>
+        <h3 id="modalTitle" style="margin-top: 0; color: var(--primary); font-weight: 700;">Add Equipment</h3>
         <input type="hidden" id="modalMode" value="add">
         
         <div class="form-group">
@@ -486,15 +694,23 @@
             <input type="text" id="modalAssetId" placeholder="e.g., B21" required>
         </div>
         <div class="form-group">
-            <label>Equipment Name / Model</label>
-            <input type="text" id="modalAssetName" placeholder="e.g., NLB40201D" required>
+            <label>Equipment Name</label>
+            <input type="text" id="modalAssetName" placeholder="e.g., High Pressure Pump Unit" required>
+        </div>
+        <div class="form-group">
+            <label>Model No.</label>
+            <input type="text" id="modalAssetModel" placeholder="e.g., NLB40201D" required>
         </div>
         <div class="form-group">
             <label>Serial Number</label>
             <input type="text" id="modalAssetSerial" placeholder="e.g., U 500100-1" required>
         </div>
+        <div class="form-group">
+            <label>Location / Site</label>
+            <input type="text" id="modalAssetLocation" placeholder="e.g., Birkat Al Awamer, Aba Saleel" required>
+        </div>
         
-        <div class="flex-buttons" style="justify-content: flex-end;">
+        <div class="flex-buttons" style="justify-content: flex-end; margin-top: 24px;">
             <button class="btn btn-secondary" onclick="closeFleetModal()">Cancel</button>
             <button class="btn btn-success" onclick="submitFleetForm()">Confirm Roster Commit</button>
         </div>
@@ -502,101 +718,116 @@
 </div>
 
 <script>
-    // ----------------------------------------------------
-    // 🔐 SECURE CRYPTOGRAPHIC AUTHENTICATION ARCHITECTURE
-    // ----------------------------------------------------
-    const SECURE_TOKEN_HASH = "240ef1cc4900d97a6f67551fb29a5011d0901e193d906e53612807315e19f74a";
+    let databaseState = {
+        master_assets_registry: {},
+        global_status_store: {},
+        historical_logs_store: {}
+    };
+    
+    let activeEquipmentId = '';
+    let fileHandle = null; 
 
-    async function computeSHA256(textStream) {
-        const encoder = new TextEncoder();
-        const dataArray = encoder.encode(textStream);
-        const bufferHash = await crypto.subtle.digest('SHA-256', dataArray);
-        const tokenArray = Array.from(new Uint8Array(bufferHash));
-        return tokenArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('logDate').valueAsDate = new Date();
+        document.getElementById('appContent').style.display = 'block';
+        clearMainDashboardDisplay();
+        updateStatusBanner();
+    });
 
-    async function verifySecureAccess() {
-        const inputPass = document.getElementById('systemPassword').value;
-
-        if (inputPass === 'admin123') { 
-            sessionStorage.setItem('isRosterSystemUnlocked', 'true');
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
-            document.getElementById('systemPassword').value = '';
-            document.getElementById('authErrorMessage').style.display = 'none';
-            initializeRosterDatabase();
-        } else {
-            document.getElementById('authErrorMessage').style.display = 'block';
-            document.getElementById('systemPassword').select();
-        }
-    }
-
-    function checkActiveAuthSession() {
-        if (sessionStorage.getItem('isRosterSystemUnlocked') === 'true') {
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('appContent').style.display = 'block';
-            initializeRosterDatabase();
-        }
-    }
-
-    function executeLogout() {
-        sessionStorage.removeItem('isRosterSystemUnlocked');
-        document.getElementById('appContent').style.display = 'none';
-        document.getElementById('authOverlay').style.display = 'flex';
-        document.getElementById('systemPassword').focus();
-    }
-
-    // ----------------------------------------------------
-    // FLEET DATABASE SYSTEM
-    // ----------------------------------------------------
-    let assetsData = null;
-
-    function initializeRosterDatabase() {
-        assetsData = JSON.parse(localStorage.getItem('master_assets_registry'));
-        if (!assetsData) {
-            assetsData = {
-                'B1': { name: 'NLB1012D', serial: 'U 409070-4' },
-                'B2': { name: 'WOMA', serial: '10750707' },
-                'B3': { name: 'WOMA', serial: '6270707' },
-                'B4': { name: 'NLB20305FDB', serial: 'U 018210-2' },
-                'B5': { name: 'NLB20305FDB', serial: 'U 902260-1' },
-                'B6': { name: 'NLB20275FDB', serial: 'U 601170-2' },
-                'B7': { name: 'NLB20305FDB', serial: 'U 017210-1' },
-                'B8': { name: 'NLB20235DB', serial: 'U 905150-1A' },
-                'B9': { name: 'NLB20305FDB', serial: 'U 211230-1' },
-                'B10': { name: 'NLB20305FDB', serial: 'U 211230-2' },
-                'B11': { name: 'NLB20305FDB', serial: 'U 210110-2' },
-                'B12': { name: 'NLB20305FDB', serial: 'U 212140-1' },
-                'B13': { name: 'NLB20305FDB', serial: 'U 212140-2' },
-                'B14': { name: 'NLB20305FDB', serial: 'U 213230-1' },
-                'B15': { name: 'NLB20305FDB', serial: 'U 212110-2' },
-                'B16': { name: 'NLB20305FDB', serial: 'U 212230-3' },
-                'B17': { name: 'NLB40201D', serial: 'U 013110-2' },
-                'B18': { name: 'NLB40201D', serial: 'U 503101-1' },
-                'B19': { name: 'NLB40201D', serial: 'U 503101-3' },
-                'B20': { name: 'NLB40201D', serial: 'U 506160-1' }
-            };
-            localStorage.setItem('master_assets_registry', JSON.stringify(assetsData));
-        }
+    function updateStatusBanner() {
+        const banner = document.getElementById('dbStatusBanner');
+        const label = document.getElementById('dbStatusLabel');
+        const overlay = document.getElementById('freezeOverlay');
         
-        const remainingKeys = Object.keys(assetsData);
-        if(remainingKeys.length > 0) {
-            selectEquipment(remainingKeys[0]);
+        if (!fileHandle) {
+            banner.style.background = "#fee2e2";
+            banner.style.borderColor = "#fecaca";
+            banner.style.color = "#991b1b";
+            label.innerHTML = `⚠️ <strong>Page Locked:</strong> Connection required. Click "Open / Link Database File" above to load data and unlock the dashboard.`;
+            overlay.style.display = 'flex';
+        } else {
+            banner.style.background = "#f0fdf4";
+            banner.style.borderColor = "#bbf7d0";
+            banner.style.color = "#166534";
+            label.innerHTML = `⚡ <strong>Real-Time File Sync Engaged!</strong> Connected to file: <strong style="color:#166534;">${fileHandle.name}</strong>. All data changes are auto-saved in the background instantly.`;
+            overlay.style.display = 'none';
+        }
+    }
+
+    function refreshSystemDashboardView() {
+        const remainingKeys = Object.keys(databaseState.master_assets_registry || {});
+        if (remainingKeys.length > 0) {
+            selectEquipment(activeEquipmentId || remainingKeys[0]);
         } else {
             clearMainDashboardDisplay();
         }
     }
 
-    let activeEquipmentId = '';
-    document.getElementById('logDate').valueAsDate = new Date();
+    async function linkDatabaseFile() {
+        try {
+            const pickerOptions = {
+                types: [{
+                    description: 'JSON Database Files',
+                    accept: { 'application/json': ['.json'] }
+                }],
+                excludeAcceptAllOption: false,
+                multiple: false
+            };
 
-    function renderMasterRegistryTable() {
+            [fileHandle] = await window.showOpenFilePicker(pickerOptions);
+            const file = await fileHandle.getFile();
+            const contents = await file.text();
+            
+            if (contents.trim() === "") {
+                databaseState = { master_assets_registry: {}, global_status_store: {}, historical_logs_store: {} };
+            } else {
+                const parsed = JSON.parse(contents);
+                databaseState = {
+                    master_assets_registry: parsed.master_assets_registry || {},
+                    global_status_store: parsed.global_status_store || {},
+                    historical_logs_store: parsed.historical_logs_store || {}
+                };
+            }
+
+            activeEquipmentId = '';
+            updateStatusBanner();
+            refreshSystemDashboardView();
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                alert('⚠️ Initialization Error: ' + err.message);
+            }
+        }
+    }
+
+    async function autoSaveToDisk() {
+        if (!fileHandle) return; 
+        try {
+            const writableStream = await fileHandle.createWritable();
+            await writableStream.write(JSON.stringify(databaseState, null, 2));
+            await writableStream.close();
+            console.log("Database background auto-save sync complete.");
+        } catch (err) {
+            console.error("Auto-save failed to pipeline data to disk handle:", err);
+            if (err.name === 'NotAllowedError') {
+                fileHandle = null;
+                updateStatusBanner();
+            }
+        }
+    }
+
+    async function renderMasterRegistryTable() {
         const tbody = document.getElementById('equipmentTableBody');
         tbody.innerHTML = '';
-        if(!assetsData) return;
+        const registry = databaseState.master_assets_registry || {};
 
-        Object.keys(assetsData).forEach(id => {
-            const savedStatus = localStorage.getItem(`status_${id}`) || 'Operational';
+        const keys = Object.keys(registry);
+        if (keys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding: 24px;">No assets registered. Click "Add New Entry" to get started.</td></tr>`;
+            return;
+        }
+
+        for (const id of keys) {
+            const savedStatus = databaseState.global_status_store[id] || 'Operational';
             
             let badgeClass = 'badge-operational';
             if (savedStatus === 'Under Maintenance') badgeClass = 'badge-maintenance';
@@ -607,13 +838,74 @@
             tr.onclick = () => selectEquipment(id);
             
             tr.innerHTML = `
-                <td>${id}</td>
-                <td>${assetsData[id].name}</td>
-                <td>${assetsData[id].serial}</td>
+                <td><strong>${id}</strong></td>
+                <td>${registry[id].name || 'Industrial Asset'}</td>
+                <td>${registry[id].model || '-'}</td>
+                <td><code style="font-size:12px; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${registry[id].serial || '-'}</code></td>
+                <td>${registry[id].location || '-'}</td>
                 <td><span class="badge ${badgeClass}">${savedStatus}</span></td>
             `;
             tbody.appendChild(tr);
+        }
+        filterFleetRegistry();
+    }
+
+    function filterFleetRegistry() {
+        const query = document.getElementById('fleetSearchInput').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#equipmentTableBody tr');
+
+        rows.forEach(row => {
+            if(row.cells.length < 6) return;
+            const assetId = row.cells[0]?.innerText.toLowerCase() || '';
+            const assetName = row.cells[1]?.innerText.toLowerCase() || '';
+            const assetModel = row.cells[2]?.innerText.toLowerCase() || '';
+            const assetSerial = row.cells[3]?.innerText.toLowerCase() || '';
+            const assetLocation = row.cells[4]?.innerText.toLowerCase() || '';
+
+            if (assetId.includes(query) || assetName.includes(query) || assetModel.includes(query) || assetSerial.includes(query) || assetLocation.includes(query)) {
+                row.style.display = ""; 
+            } else {
+                row.style.display = "none"; 
+            }
         });
+    }
+
+    async function selectEquipment(id) {
+        if (!id || !databaseState.master_assets_registry[id]) {
+            const keys = Object.keys(databaseState.master_assets_registry || {});
+            id = keys.length > 0 ? keys[0] : '';
+        }
+        
+        activeEquipmentId = id;
+        await renderMasterRegistryTable();
+        
+        if (!id) {
+            clearMainDashboardDisplay();
+            return;
+        }
+
+        cancelLogEditing();
+
+        const currentStatus = databaseState.global_status_store[id] || 'Operational';
+        const currentAsset = databaseState.master_assets_registry[id];
+
+        document.getElementById('activeIdHeader').innerText = id;
+        document.getElementById('ledgerIdHeader').innerText = id;
+        document.getElementById('reportIdHeader').innerText = id;
+        document.getElementById('summaryName').innerText = currentAsset.name || 'Industrial Asset';
+        document.getElementById('summaryModel').innerText = currentAsset.model || '-';
+        document.getElementById('summarySerial').innerText = currentAsset.serial || '-';
+        document.getElementById('summaryLocation').innerText = currentAsset.location || '-';
+        document.getElementById('summaryStatus').innerText = currentStatus;
+        document.getElementById('equipmentStatusSelect').value = currentStatus;
+
+        document.getElementById('printID').innerText = id;
+        document.getElementById('printName').innerText = currentAsset.name || 'Industrial Asset';
+        document.getElementById('printModel').innerText = currentAsset.model || '-';
+        document.getElementById('printSerial').innerText = currentAsset.serial || '-';
+        document.getElementById('printLocation').innerText = currentAsset.location || '-';
+
+        await renderHistoryLedger();
     }
 
     function openFleetModal(mode) {
@@ -626,17 +918,21 @@
             document.getElementById('modalAssetId').value = '';
             document.getElementById('modalAssetId').disabled = false;
             document.getElementById('modalAssetName').value = '';
+            document.getElementById('modalAssetModel').value = '';
             document.getElementById('modalAssetSerial').value = '';
+            document.getElementById('modalAssetLocation').value = '';
         } else if (mode === 'edit') {
-            if (!activeEquipmentId || !assetsData[activeEquipmentId]) {
+            if (!activeEquipmentId || !databaseState.master_assets_registry[activeEquipmentId]) {
                 alert('Please select an active machine row from the registry table list first.');
                 return;
             }
             title.innerText = `✏️ Edit Equipment Parameters (${activeEquipmentId})`;
             document.getElementById('modalAssetId').value = activeEquipmentId;
             document.getElementById('modalAssetId').disabled = true;
-            document.getElementById('modalAssetName').value = assetsData[activeEquipmentId].name;
-            document.getElementById('modalAssetSerial').value = assetsData[activeEquipmentId].serial;
+            document.getElementById('modalAssetName').value = databaseState.master_assets_registry[activeEquipmentId].name || '';
+            document.getElementById('modalAssetModel').value = databaseState.master_assets_registry[activeEquipmentId].model || '';
+            document.getElementById('modalAssetSerial').value = databaseState.master_assets_registry[activeEquipmentId].serial || '';
+            document.getElementById('modalAssetLocation').value = databaseState.master_assets_registry[activeEquipmentId].location || '';
         }
         modal.style.display = 'block';
     }
@@ -645,86 +941,74 @@
         document.getElementById('fleetModal').style.display = 'none';
     }
 
-    function submitFleetForm() {
+    async function submitFleetForm() {
         const mode = document.getElementById('modalMode').value;
         const id = document.getElementById('modalAssetId').value.trim().toUpperCase();
         const name = document.getElementById('modalAssetName').value.trim();
+        const modelNo = document.getElementById('modalAssetModel').value.trim();
         const serial = document.getElementById('modalAssetSerial').value.trim();
+        const locationStr = document.getElementById('modalAssetLocation').value.trim();
 
-        if (!id || !name || !serial) {
-            alert('All registration identity fields are required.');
+        if (!id || !name || !modelNo || !serial) {
+            alert('Identity registration fields (ID, Name, Model, and Serial) are required.');
             return;
         }
 
         if (mode === 'add') {
-            if (assetsData[id]) {
+            if (databaseState.master_assets_registry[id]) {
                 alert(`Error: Equipment ID reference "${id}" is already assigned to an asset.`);
                 return;
             }
-            assetsData[id] = { name: name, serial: serial };
-            localStorage.setItem(`status_${id}`, 'Operational');
+            databaseState.master_assets_registry[id] = { name: name, model: modelNo, serial: serial, location: locationStr || '-' };
+            databaseState.global_status_store[id] = 'Operational';
         } else if (mode === 'edit') {
-            assetsData[id].name = name;
-            assetsData[id].serial = serial;
+            databaseState.master_assets_registry[id].name = name;
+            databaseState.master_assets_registry[id].model = modelNo;
+            databaseState.master_assets_registry[id].serial = serial;
+            databaseState.master_assets_registry[id].location = locationStr || '-';
         }
 
-        localStorage.setItem('master_assets_registry', JSON.stringify(assetsData));
         closeFleetModal();
-        selectEquipment(id);
+        await selectEquipment(id);
+        await autoSaveToDisk(); 
     }
 
-    function deleteEquipment() {
-        if (!activeEquipmentId || !assetsData[activeEquipmentId]) {
+    async function deleteEquipment() {
+        if (!activeEquipmentId || !databaseState.master_assets_registry[activeEquipmentId]) {
             alert('Select an active machine row from the registry table database list first.');
             return;
         }
 
         if (confirm(`⚠️ Warning! Permanently delete Asset "${activeEquipmentId}"?`)) {
-            localStorage.removeItem(`status_${activeEquipmentId}`);
-            localStorage.removeItem(`logs_${activeEquipmentId}`);
-            delete assetsData[activeEquipmentId];
+            delete databaseState.global_status_store[activeEquipmentId];
+            delete databaseState.historical_logs_store[activeEquipmentId];
+            delete databaseState.master_assets_registry[activeEquipmentId];
             
-            localStorage.setItem('master_assets_registry', JSON.stringify(assetsData));
-            
-            const remainingKeys = Object.keys(assetsData);
-            if(remainingKeys.length > 0) {
-                selectEquipment(remainingKeys[0]);
-            } else {
-                clearMainDashboardDisplay();
-            }
+            activeEquipmentId = '';
+            refreshSystemDashboardView();
+            await autoSaveToDisk(); 
         }
     }
 
-    function clearMainDashboardDisplay() {
+    async function clearMainDashboardDisplay() {
         activeEquipmentId = '';
-        renderMasterRegistryTable();
-        document.getElementById('activeIdHeader').innerText = 'None';
-        document.getElementById('ledgerIdHeader').innerText = 'None';
-        document.getElementById('reportIdHeader').innerText = 'None';
+        document.getElementById('activeIdHeader').innerText = '-';
+        document.getElementById('ledgerIdHeader').innerText = '-';
+        document.getElementById('reportIdHeader').innerText = '-';
         document.getElementById('summaryName').innerText = '-';
+        document.getElementById('summaryModel').innerText = '-';
         document.getElementById('summarySerial').innerText = '-';
+        document.getElementById('summaryLocation').innerText = '-';
         document.getElementById('summaryStatus').innerText = '-';
-        document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8;">Roster registry database completely empty.</td></tr>`;
-        generateHistoricalReport();
-    }
-
-    function selectEquipment(id) {
-        if (!id) return;
-        activeEquipmentId = id;
+        document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding: 24px;">No historical logs found.</td></tr>`;
         
-        renderMasterRegistryTable();
-        cancelLogEditing();
-
-        const currentStatus = localStorage.getItem(`status_${id}`) || 'Operational';
-        document.getElementById('activeIdHeader').innerText = id;
-        document.getElementById('ledgerIdHeader').innerText = id;
-        document.getElementById('reportIdHeader').innerText = id;
-        document.getElementById('summaryName').innerText = assetsData[id].name;
-        document.getElementById('summarySerial').innerText = assetsData[id].serial;
-        document.getElementById('summaryStatus').innerText = currentStatus;
-        document.getElementById('equipmentStatusSelect').value = currentStatus;
-
-        renderHistoryLedger();
+        document.getElementById('printID').innerText = '-';
+        document.getElementById('printName').innerText = '-';
+        document.getElementById('printModel').innerText = '-';
+        document.getElementById('printSerial').innerText = '-';
+        document.getElementById('printLocation').innerText = '-';
+        
+        generateHistoricalReport([]);
     }
 
     function updateLiveStatusField() {
@@ -732,21 +1016,38 @@
         document.getElementById('summaryStatus').innerText = selectedStatus;
     }
 
-    // ----------------------------------------------------
-    // HISTORY LOGS ACTIONS & METRIC COMPILATIONS
-    // ----------------------------------------------------
-    function renderHistoryLedger() {
+    function generateActionsFromChecklist() {
+        const checks = {
+            "Fluid Levels Check": document.getElementById('pmFluids').checked,
+            "Filters/Separators Maintenance": document.getElementById('pmFilters').checked,
+            "Hose/Seals/Belt Integrity Review": document.getElementById('pmBelts').checked,
+            "Structural Fastener Torque Verification": document.getElementById('pmTorque').checked,
+            "Gauge Calibration Certification": document.getElementById('pmGauges').checked
+        };
+
+        let performedActions = [];
+        for (const [task, completed] of Object.entries(checks)) {
+            if (completed) performedActions.push(task);
+        }
+
+        if (performedActions.length > 0) {
+            document.getElementById('serviceAction').value = "Completed regular preventive routines: " + performedActions.join(', ') + ".";
+        } else {
+            document.getElementById('serviceAction').value = "";
+        }
+    }
+
+    async function renderHistoryLedger() {
         const bodyContainer = document.getElementById('historyTableBody');
         bodyContainer.innerHTML = '';
 
         if (!activeEquipmentId) return;
 
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        const records = JSON.parse(localStorage.getItem(logStorageKey)) || [];
+        const records = databaseState.historical_logs_store[activeEquipmentId] || [];
 
         if (records.length === 0) {
-            bodyContainer.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8;">No historical logs found for this element.</td></tr>`;
-            generateHistoricalReport();
+            bodyContainer.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding: 24px;">No historical logs found for this element.</td></tr>`;
+            generateHistoricalReport([]);
             return;
         }
 
@@ -761,11 +1062,11 @@
                 <td><strong>${item.currentHours || '0.0'} hrs</strong></td>
                 <td>${item.targetMaintenanceHours || '0.0'} hrs</td>
                 <td><span class="badge ${badgeClass}">${item.status || 'Operational'}</span></td>
-                <td>${item.faultReport || '-'}</td>
-                <td>${item.serviceAction || '-'}</td>
-                <td>${item.partsReplaced || '-'}</td>
+                <td><small>${item.faultReport || '-'}</small></td>
+                <td><small>${item.serviceAction || '-'}</small></td>
+                <td><small>${item.partsReplaced || '-'}</small></td>
                 <td>${item.technician}</td>
-                <td>${item.remarks || '-'}</td>
+                <td><small>${item.remarks || '-'}</small></td>
                 <td style="text-align:center;">
                     <button class="btn btn-warning btn-sm" onclick="editLogRecord(${index})">✏️ Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteLogRecord(${index})">🗑️ Delete</button>
@@ -774,38 +1075,24 @@
             bodyContainer.appendChild(tr);
         });
 
-        generateHistoricalReport();
+        generateHistoricalReport(records);
     }
 
-    function generateHistoricalReport() {
+    function generateHistoricalReport(records) {
         const totalEventsEl = document.getElementById('statTotalEvents');
         const maxHoursEl = document.getElementById('statMaxHours');
         const avgIntervalEl = document.getElementById('statAvgInterval');
-        const faultTrackerContentEl = document.getElementById('reportFaultTrackerContent');
 
-        if (!activeEquipmentId) {
+        if (!activeEquipmentId || records.length === 0) {
             totalEventsEl.innerText = "0";
             maxHoursEl.innerText = "0.0 hrs";
             avgIntervalEl.innerText = "0.0 hrs";
-            faultTrackerContentEl.innerHTML = "No equipment active to compile a report metrics stream.";
-            return;
-        }
-
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        const records = JSON.parse(localStorage.getItem(logStorageKey)) || [];
-
-        if (records.length === 0) {
-            totalEventsEl.innerText = "0";
-            maxHoursEl.innerText = "0.0 hrs";
-            avgIntervalEl.innerText = "0.0 hrs";
-            faultTrackerContentEl.innerHTML = "No historical entries found. Add logbook entries to construct engineering metrics.";
             return;
         }
 
         let maxHours = 0;
         let sumIntervals = 0;
         let validIntervalCount = 0;
-        let faultItemsHTML = "";
 
         records.forEach(record => {
             const currentHrs = parseFloat(record.currentHours) || 0;
@@ -817,10 +1104,6 @@
                 sumIntervals += (targetHrs - currentHrs);
                 validIntervalCount++;
             }
-
-            if (record.faultReport && record.faultReport.trim() !== "" && record.faultReport !== "-") {
-                faultItemsHTML += `<li><strong>[${record.date}]:</strong> ${record.faultReport} <em>(Tech: ${record.technician})</em></li>`;
-            }
         });
 
         const averageInterval = validIntervalCount > 0 ? (sumIntervals / validIntervalCount) : 0;
@@ -828,15 +1111,9 @@
         totalEventsEl.innerText = records.length;
         maxHoursEl.innerText = `${maxHours.toFixed(1)} hrs`;
         avgIntervalEl.innerText = `${averageInterval.toFixed(1)} hrs`;
-
-        if (faultItemsHTML !== "") {
-            faultTrackerContentEl.innerHTML = `<ul style="margin: 5px 0 0 0; padding-left: 20px;">${faultItemsHTML}</ul>`;
-        } else {
-            faultTrackerContentEl.innerHTML = "✅ Clean History Ledger: No critical system malfunctions or structural failure alerts logged.";
-        }
     }
 
-    function saveLog(event) {
+    async function saveLog(event) {
         event.preventDefault();
 
         const currentHoursNum = parseFloat(document.getElementById('currentHours').value) || 0;
@@ -857,11 +1134,21 @@
             serviceAction: document.getElementById('serviceAction').value,
             partsReplaced: document.getElementById('partsReplaced').value,
             technician: document.getElementById('technician').value,
-            remarks: document.getElementById('remarks').value.trim()
+            remarks: document.getElementById('remarks').value,
+            checklist: {
+                fluids: document.getElementById('pmFluids').checked,
+                filters: document.getElementById('pmFilters').checked,
+                belts: document.getElementById('pmBelts').checked,
+                torque: document.getElementById('pmTorque').checked,
+                gauges: document.getElementById('pmGauges').checked
+            }
         };
 
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        let currentRecordsList = JSON.parse(localStorage.getItem(logStorageKey)) || [];
+        if (!databaseState.historical_logs_store[activeEquipmentId]) {
+            databaseState.historical_logs_store[activeEquipmentId] = [];
+        }
+
+        let currentRecordsList = databaseState.historical_logs_store[activeEquipmentId];
         const editIndex = parseInt(document.getElementById('editingLogIndex').value);
 
         if (editIndex > -1) {
@@ -870,16 +1157,15 @@
             currentRecordsList.push(logDataPacket);
         }
 
-        localStorage.setItem(logStorageKey, JSON.stringify(currentRecordsList));
-        localStorage.setItem(`status_${activeEquipmentId}`, selectedStatusValue);
-
+        databaseState.global_status_store[activeEquipmentId] = selectedStatusValue;
+        
         cancelLogEditing();
-        selectEquipment(activeEquipmentId);
+        await selectEquipment(activeEquipmentId);
+        await autoSaveToDisk(); 
     }
 
-    function editLogRecord(index) {
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        const records = JSON.parse(localStorage.getItem(logStorageKey)) || [];
+    async function editLogRecord(index) {
+        const records = databaseState.historical_logs_store[activeEquipmentId] || [];
         const targetedRecord = records[index];
 
         if (!targetedRecord) return;
@@ -893,16 +1179,17 @@
         document.getElementById('serviceAction').value = targetedRecord.serviceAction;
         document.getElementById('partsReplaced').value = targetedRecord.partsReplaced;
         document.getElementById('technician').value = targetedRecord.technician;
-        
-        let cleanRemarks = targetedRecord.remarks || '';
-        if (cleanRemarks.startsWith('[All PM Daily') || cleanRemarks.startsWith('[PM Checked:')) {
-            const parsingArray = cleanRemarks.split('] | ');
-            cleanRemarks = parsingArray.length > 1 ? parsingArray.slice(1).join('] | ') : '';
-            if (parsingArray.length === 1 && !targetedRecord.remarks.includes(' | ')) {
-                cleanRemarks = '';
-            }
+        document.getElementById('remarks').value = targetedRecord.remarks;
+
+        if (targetedRecord.checklist) {
+            document.getElementById('pmFluids').checked = targetedRecord.checklist.fluids || false;
+            document.getElementById('pmFilters').checked = targetedRecord.checklist.filters || false;
+            document.getElementById('pmBelts').checked = targetedRecord.checklist.belts || false;
+            document.getElementById('pmTorque').checked = targetedRecord.checklist.torque || false;
+            document.getElementById('pmGauges').checked = targetedRecord.checklist.gauges || false;
+        } else {
+            resetCheckboxes();
         }
-        document.getElementById('remarks').value = cleanRemarks;
 
         document.getElementById('formSubmitBtn').innerText = "Confirm Update Log Details";
         document.getElementById('formSubmitBtn').className = "btn btn-warning";
@@ -912,46 +1199,53 @@
         document.getElementById('logDate').focus();
     }
 
-    function cancelLogEditing() {
+    function resetCheckboxes() {
+        document.getElementById('pmFluids').checked = false;
+        document.getElementById('pmFilters').checked = false;
+        document.getElementById('pmBelts').checked = false;
+        document.getElementById('pmTorque').checked = false;
+        document.getElementById('pmGauges').checked = false;
+    }
+
+    async function cancelLogEditing() {
         document.getElementById('editingLogIndex').value = "-1";
         document.getElementById('maintenanceForm').reset();
+        resetCheckboxes();
         document.getElementById('logDate').valueAsDate = new Date();
 
         document.getElementById('formSubmitBtn').innerText = "Save Entry & Update Status";
         document.getElementById('formSubmitBtn').className = "btn btn-success";
         document.getElementById('cancelEditBtn').style.display = "none";
 
-        if(activeEquipmentId && assetsData[activeEquipmentId]) {
-            const curStatus = localStorage.getItem(`status_${activeEquipmentId}`) || 'Operational';
+        if (activeEquipmentId && databaseState.master_assets_registry[activeEquipmentId]) {
+            const curStatus = databaseState.global_status_store[activeEquipmentId] || 'Operational';
             document.getElementById('equipmentStatusSelect').value = curStatus;
             updateLiveStatusField();
         }
     }
 
-    function deleteLogRecord(index) {
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        let records = JSON.parse(localStorage.getItem(logStorageKey)) || [];
+    async function deleteLogRecord(index) {
+        let records = databaseState.historical_logs_store[activeEquipmentId] || [];
 
         if (confirm("Delete this log timeline data row?")) {
             records.splice(index, 1);
-            localStorage.setItem(logStorageKey, JSON.stringify(records));
             
+            let newStatus = 'Operational';
             if (records.length > 0) {
-                localStorage.setItem(`status_${activeEquipmentId}`, records[records.length - 1].status);
-            } else {
-                localStorage.setItem(`status_${activeEquipmentId}`, 'Operational');
+                newStatus = records[records.length - 1].status;
             }
-            
-            selectEquipment(activeEquipmentId);
+
+            databaseState.global_status_store[activeEquipmentId] = newStatus;
+            await selectEquipment(activeEquipmentId);
+            await autoSaveToDisk(); 
         }
     }
 
-    function exportCSV() {
-        const logStorageKey = `logs_${activeEquipmentId}`;
-        const records = JSON.parse(localStorage.getItem(logStorageKey)) || [];
+    async function exportCSV() {
+        const records = databaseState.historical_logs_store[activeEquipmentId] || [];
         if (records.length === 0) return;
 
-        let csvString = `ID Number:,${activeEquipmentId}\nEquipment Name:,${assetsData[activeEquipmentId].name}\nSerial Number:,${assetsData[activeEquipmentId].serial}\n\n`;
+        let csvString = `ID Number:,${activeEquipmentId}\nEquipment Name:,${databaseState.master_assets_registry[activeEquipmentId].name}\nModel No:,${databaseState.master_assets_registry[activeEquipmentId].model}\nSerial Number:,${databaseState.master_assets_registry[activeEquipmentId].serial}\nLocation:,${databaseState.master_assets_registry[activeEquipmentId].location}\n\n`;
         csvString += `Date,Current Hours Reading,Target Hour Maintenance,Status Logged,Inspection Fault Report,Service Performed/Action Taken,Parts Replaced,Technician,Remarks\n`;
 
         records.forEach(r => {
@@ -967,8 +1261,34 @@
         document.body.removeChild(link);
     }
 
-    checkActiveAuthSession();
-</script>
+    function triggerRegistryPrint() {
+        const registryKeys = Object.keys(databaseState.master_assets_registry || {});
+        if (registryKeys.length === 0) {
+            alert("The master registry contains no data entries to print.");
+            return;
+        }
+        
+        document.getElementById('printRegistryDate').innerText = new Date().toLocaleString();
+        document.body.classList.remove('printing-ledger');
+        document.body.classList.add('printing-registry');
+        window.print();
+    }
 
+    async function triggerLedgerPrint() {
+        const records = databaseState.historical_logs_store[activeEquipmentId || ''] || [];
+        if (records.length === 0) {
+            alert("The history ledger contains no logbook data row items to send to the printer engine.");
+            return;
+        }
+
+        document.body.classList.remove('printing-registry');
+        document.body.classList.add('printing-ledger');
+        window.print();
+    }
+
+    window.onafterprint = function() {
+        document.body.classList.remove('printing-registry', 'printing-ledger');
+    };
+</script>
 </body>
 </html>
