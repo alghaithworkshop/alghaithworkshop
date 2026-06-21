@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipment Maintenance Management System</title>
+    <title>Equipment Maintenance & Asset Dispatch System</title>
     <style>
         :root {
             --primary: #0f172a;
@@ -41,7 +41,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -81,14 +81,11 @@
             gap: 12px;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 32px;
+        .view-panel {
+            display: none;
         }
-
-        @media (min-width: 1200px) {
-            .grid { grid-template-columns: 1fr 1.6fr; }
+        .view-panel.active {
+            display: block;
         }
 
         .card {
@@ -328,6 +325,9 @@
         .badge-operational { background-color: #d1fae5; color: #065f46; }
         .badge-maintenance { background-color: #fef3c7; color: #92400e; }
         .badge-down { background-color: #fee2e2; color: #991b1b; }
+        
+        .badge-move-in { background-color: #e0f2fe; color: #0369a1; }
+        .badge-move-out { background-color: #fae8ff; color: #a21caf; }
 
         .flex-buttons {
             display: flex;
@@ -411,17 +411,25 @@
             line-height: 1.6;
         }
 
-        .print-only-header { display: none; }
-        .print-only-signature { display: none; }
-        body.printing-registry .grid > div:last-child { display: none !important; }
-        body.printing-ledger .grid > div:first-child { display: none !important; }
+        /* Helper class for dynamic admin view control */
+        .admin-only {
+            display: none !important;
+        }
+        body.admin-mode .admin-only {
+            display: inline-flex !important;
+        }
+        body.admin-mode table .admin-only {
+            display: inline-block !important;
+        }
+
+        .print-only-header, .print-only-signature { display: none; }
+        body.printing-registry #maintenancePanel, body.printing-registry #movementPanel { display: none !important; }
+        body.printing-ledger #registryPanel, body.printing-ledger #movementPanel { display: none !important; }
 
         @media print {
             body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; font-size: 12px; }
-            header, #maintenanceForm, .flex-buttons, .card h2, .modal, .btn-sm, .search-container, .db-status-banner, .page-freeze-overlay { display: none !important; }
-            body.printing-registry th:last-child, body.printing-registry td:last-child { display: table-cell !important; }
-            body.printing-ledger th:last-child, body.printing-ledger td:last-child { display: none !important; }
-            .grid { display: block !important; }
+            header, form, .flex-buttons, .card h2, .modal, .btn-sm, .search-container, .db-status-banner, .page-freeze-overlay { display: none !important; }
+            .view-panel { display: block !important; }
             .card { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
             .table-container { max-height: none !important; overflow: visible !important; border: none !important; }
             table { width: 100% !important; border: 1px solid #000 !important; page-break-inside: auto; }
@@ -431,26 +439,9 @@
             .badge { border: 1px solid #000 !important; background: transparent !important; color: #000 !important; padding: 2px 6px !important; border-radius: 4px !important; text-transform: uppercase; font-size: 10px !important; }
             .print-only-header { display: block !important; margin-bottom: 20px; border-bottom: 3px double #000; padding-bottom: 10px; }
             .print-only-header h1 { margin: 0 0 10px 0; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
-            .print-meta-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; font-size: 13px; }
-            
-            body.printing-ledger .print-only-signature {
-                display: block !important;
-                margin-top: 50px;
-                page-break-inside: avoid;
-            }
-            .signature-block {
-                display: flex;
-                justify-content: flex-end;
-                margin-top: 30px;
-            }
-            .signature-line {
-                width: 250px;
-                border-top: 1px solid #000;
-                text-align: center;
-                padding-top: 5px;
-                font-weight: 600;
-                font-size: 13px;
-            }
+            body.printing-ledger .print-only-signature { display: block !important; margin-top: 50px; page-break-inside: avoid; }
+            .signature-block { display: flex; justify-content: flex-end; margin-top: 30px; }
+            .signature-line { width: 250px; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-weight: 600; font-size: 13px; }
         }
     </style>
 </head>
@@ -460,10 +451,11 @@
     <div class="container">
         <header>
             <div>
-                <h1>🛠️ Equipment Maintenance Management</h1>
+                <h1>🛠️ Equipment Maintenance & Dispatch Log</h1>
                 <p>Online Asset Logbook, Fleet Status Tracking & Service History Records</p>
             </div>
             <div class="header-actions">
+                <button id="roleToggleBtn" class="btn btn-warning" onclick="toggleAdminRole()">🔓 Switch to Admin View</button>
                 <button class="btn btn-success" onclick="fetchCloudDatabase()">🔄 Reload from Cloud</button>
             </div>
         </header>
@@ -483,204 +475,254 @@
             </div>
         </div>
 
-        <div class="grid">
-            <div>
-                <div class="card">
-                    <div class="print-only-header" id="printRegistryHeader">
-                        <h1>MASTER FLEET REGISTRY ROSTER REPORT</h1>
-                        <p style="margin: 0; font-size: 12px; font-weight: normal;">Generated on: <span id="printRegistryDate"></span></p>
-                    </div>
+        <div id="registryPanel" class="view-panel active">
+            <div class="card">
+                <div class="print-only-header" id="printRegistryHeader">
+                    <h1>MASTER FLEET REGISTRY ROSTER REPORT</h1>
+                    <p style="margin: 0; font-size: 12px; font-weight: normal;">Generated on: <span id="printRegistryDate"></span></p>
+                </div>
 
-                    <h2>📋 Master Fleet Registry</h2>
-                    
-                    <div class="search-container">
-                        <input type="text" id="fleetSearchInput" onkeyup="filterFleetRegistry()" placeholder="Search ID, name, model, serial, or location...">
-                    </div>
+                <h2>📋 Equipment Registry</h2>
+                
+                <div class="search-container">
+                    <input type="text" id="fleetSearchInput" onkeyup="filterFleetRegistry()" placeholder="Search ID, name, model, serial, or location...">
+                </div>
 
-                    <div class="table-container">
-                        <table id="equipmentTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Equipment Name</th>
-                                    <th>Model No.</th>
-                                    <th>Serial No.</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="equipmentTableBody"></tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="flex-buttons">
-                        <button class="btn btn-success" onclick="openFleetModal('add')">➕ Add New Entry</button>
-                        <button class="btn btn-warning" onclick="openFleetModal('edit')">✏️ Edit Selected</button>
-                        <button class="btn btn-danger" onclick="deleteEquipment()">🗑️ Delete Selected</button>
-                        <button class="btn btn-secondary" onclick="triggerRegistryPrint()">🖨️ Print Fleet Roster</button>
-                    </div>
+                <div class="table-container">
+                    <table id="equipmentTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No.</th>
+                                <th>ID</th>
+                                <th>Equipment Name</th>
+                                <th>Model No.</th>
+                                <th>Serial No.</th>
+                                <th>Current Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="equipmentTableBody"></tbody>
+                    </table>
+                </div>
+                
+                <div class="flex-buttons">
+                    <button class="btn btn-accent" onclick="navigateToView('maintenance')">🔧 Go to Maintenance Form</button>
+                    <button class="btn btn-warning" style="background-color: var(--accent-hover);" onclick="navigateToView('movement')">🚚 Go to In/Out Dispatch Form</button>
+                    <button class="btn btn-success admin-only" onclick="openFleetModal('add')">➕ Add New Entry</button>
+                    <button class="btn btn-warning admin-only" onclick="openFleetModal('edit')">✏️ Edit Selected</button>
+                    <button class="btn btn-danger admin-only" onclick="deleteEquipment()">🗑️ Delete Selected</button>
+                    <button class="btn btn-secondary" onclick="triggerRegistryPrint()">🖨️ Print Fleet Roster</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="maintenancePanel" class="view-panel">
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showRegistryView()">⬅️ Back to Fleet Registry</button>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Asset Overview (Maintenance): <span class="activeIdHeader">-</span></h2>
+                <div class="asset-summary">
+                    <div><strong>Equipment Name</strong> <span class="summaryName">-</span></div>
+                    <div><strong>Model No</strong> <span class="summaryModel">-</span></div>
+                    <div><strong>Serial No</strong> <span class="summarySerial">-</span></div>
+                    <div><strong>Current Location</strong> <span class="summaryLocation">-</span></div>
+                    <div><strong>Current Status</strong> <span class="summaryStatus">-</span></div>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <div class="card">
-                    <h2>📝 Record Log & Update Status: <span id="activeIdHeader">-</span></h2>
-                    <div class="asset-summary">
-                        <div><strong>Equipment Name</strong> <span id="summaryName">-</span></div>
-                        <div><strong>Model No</strong> <span id="summaryModel">-</span></div>
-                        <div><strong>Serial No</strong> <span id="summarySerial">-</span></div>
-                        <div><strong>Location</strong> <span id="summaryLocation">-</span></div>
-                        <div><strong>Current Status</strong> <span id="summaryStatus">-</span></div>
-                    </div>
+            <div class="card">
+                <h2>📝 Record Maintenance Log</h2>
+                <form id="maintenanceForm" onsubmit="saveLog(event)">
+                    <input type="hidden" id="editingLogIndex" value="-1">
 
-                    <form id="maintenanceForm" onsubmit="saveLog(event)">
-                        <input type="hidden" id="editingLogIndex" value="-1">
-
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                            <div class="form-group">
-                                <label>Inspection Date</label>
-                                <input type="date" id="logDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Set Operational Status</label>
-                                <select id="equipmentStatusSelect" onchange="updateLiveStatusField()">
-                                    <option value="Operational">Operational</option>
-                                    <option value="Under Maintenance">Under Maintenance</option>
-                                    <option value="Down">Down</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                            <div class="form-group">
-                                <label>Current Hours Reading</label>
-                                <input type="number" step="0.1" id="currentHours" placeholder="Enter current running hours" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Target Hour Maintenance</label>
-                                <input type="number" step="0.1" id="targetMaintenanceHours" placeholder="Enter planned maintenance milestone" required>
-                            </div>
-                        </div>
-
-                        <div class="checklist-container">
-                            <div class="checklist-title">🛠️ Preventive Maintenance Verification Checklist</div>
-                            <div class="checklist-grid">
-                                <label class="checklist-item">
-                                    <input type="checkbox" id="pmFluids" onchange="generateActionsFromChecklist()"> Fluid Levels Checked (Oil, Coolant)
-                                </label>
-                                <label class="checklist-item">
-                                    <input type="checkbox" id="pmFilters" onchange="generateActionsFromChecklist()"> Filters & Separators Cleaned
-                                </label>
-                                <label class="checklist-item">
-                                    <input type="checkbox" id="pmBelts" onchange="generateActionsFromChecklist()"> Belts, Hoses & Seals Verified
-                                </label>
-                                <label class="checklist-item">
-                                    <input type="checkbox" id="pmTorque" onchange="generateActionsFromChecklist()"> Structural Bolts Torqued
-                                </label>
-                                <label class="checklist-item">
-                                    <input type="checkbox" id="pmGauges" onchange="generateActionsFromChecklist()"> Pressure Gauges Calibrated
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
-                            <div class="form-group">
-                                <label>Inspection Fault Report</label>
-                                <textarea id="faultReport" placeholder="Describe detected structural or functional issues..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Service Performed / Action Taken</label>
-                                <textarea id="serviceAction" placeholder="Adjustments made, system tasks completed..."></textarea>
-                            </div>
-                        </div>
-
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                            <div class="form-group">
-                                <label>Parts Replaced</label>
-                                <input type="text" id="partsReplaced" placeholder="e.g., Gaskets, O-Rings, None">
-                            </div>
-                            <div class="form-group">
-                                <label>Technician Name</label>
-                                <input type="text" id="technician" placeholder="Sign-off full name" required>
-                            </div>
-                        </div>
-
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                         <div class="form-group">
-                            <label>Remarks</label>
-                            <input type="text" id="remarks" placeholder="General structural or operational notes">
+                            <label>Inspection Date</label>
+                            <input type="date" id="logDate" required>
                         </div>
-
-                        <div class="flex-buttons" style="margin-top: 5px;">
-                            <button type="submit" id="formSubmitBtn" class="btn btn-success">Save Entry & Update Status</button>
-                            <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;" onclick="cancelLogEditing()">Cancel Edit</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <div class="print-only-header" id="printLedgerHeader">
-                        <h1>EQUIPMENT MAINTENANCE HISTORICAL LEDGER</h1>
-                        <div class="print-meta-grid">
-                            <div><strong>Asset ID:</strong> <span id="printID">-</span></div>
-                            <div><strong>Equipment Name:</strong> <span id="printName">-</span></div>
-                            <div><strong>Model No:</strong> <span id="printModel">-</span></div>
-                            <div><strong>Serial Number:</strong> <span id="printSerial">-</span></div>
-                            <div><strong>Location:</strong> <span id="printLocation">-</span></div>
+                        <div class="form-group">
+                            <label>Set Operational Status</label>
+                            <select id="equipmentStatusSelect" onchange="updateLiveStatusField()">
+                                <option value="Operational">Operational</option>
+                                <option value="Under Maintenance">Under Maintenance</option>
+                                <option value="Down">Down</option>
+                            </select>
                         </div>
                     </div>
 
-                    <h2>🗓️ Historical Log Ledger: <span id="ledgerIdHeader">-</span></h2>
-                    <div class="table-container">
-                        <table id="historyTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Current Hours</th>
-                                    <th>Target Maint. Hours</th>
-                                    <th>Status Logged</th>
-                                    <th>Fault Report</th>
-                                    <th>Action Taken</th>
-                                    <th>Parts Replaced</th>
-                                    <th>Technician</th>
-                                    <th>Remarks</th>
-                                    <th style="min-width: 140px; text-align: center;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody"></tbody>
-                        </table>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>Current Hours Reading</label>
+                            <input type="number" step="0.1" id="currentHours" placeholder="Running hours" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Hour Maintenance</label>
+                            <input type="number" step="0.1" id="targetMaintenanceHours" placeholder="Next milestone" required>
+                        </div>
                     </div>
 
-                    <div class="print-only-signature">
-                        <div class="signature-block">
-                            <div class="signature-line">Supervisor Signature</div>
+                    <div class="checklist-container">
+                        <div class="checklist-title">🛠️ Preventive Maintenance Checklist</div>
+                        <div class="checklist-grid">
+                            <label class="checklist-item"><input type="checkbox" id="pmFluids" onchange="generateActionsFromChecklist()"> Fluids</label>
+                            <label class="checklist-item"><input type="checkbox" id="pmFilters" onchange="generateActionsFromChecklist()"> Filters</label>
+                            <label class="checklist-item"><input type="checkbox" id="pmBelts" onchange="generateActionsFromChecklist()"> Belts/Hoses</label>
+                            <label class="checklist-item"><input type="checkbox" id="pmTorque" onchange="generateActionsFromChecklist()"> Torque</label>
+                            <label class="checklist-item"><input type="checkbox" id="pmGauges" onchange="generateActionsFromChecklist()"> Gauges</label>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Inspection Fault Report</label>
+                        <textarea id="faultReport" placeholder="Describe problems found..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Service Performed / Action Taken</label>
+                        <textarea id="serviceAction" placeholder="Adjustments or work executed..."></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>Parts Replaced</label>
+                            <input type="text" id="partsReplaced" placeholder="Gaskets, O-Rings, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label>Technician Name</label>
+                            <input type="text" id="technician" placeholder="Full name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Remarks</label>
+                        <input type="text" id="remarks" placeholder="General notes">
                     </div>
 
                     <div class="flex-buttons">
-                        <button class="btn btn-secondary" onclick="exportCSV()">Export Selected Log to CSV</button>
-                        <button class="btn btn-warning" onclick="triggerLedgerPrint()">🖨️ Print Historical Ledger</button>
+                        <button type="submit" id="formSubmitBtn" class="btn btn-success">Save Maintenance Entry</button>
+                        <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display:none;" onclick="cancelLogEditing()">Cancel</button>
                     </div>
-                </div>
+                </form>
+            </div>
 
-                <div class="card">
-                    <h2>📊 Automated Maintenance Metrics Report: <span id="reportIdHeader">-</span></h2>
-                    <div class="report-grid">
-                        <div class="report-stat-box">
-                            <label>Total Logged Events</label>
-                            <div id="statTotalEvents">0</div>
-                        </div>
-                        <div class="report-stat-box">
-                            <label>Max Accumulated Runtime</label>
-                            <div id="statMaxHours">0.0 hrs</div>
-                        </div>
-                        <div class="report-stat-box">
-                            <label>Avg Maintenance Interval</label>
-                            <div id="statAvgInterval">0.0 hrs</div>
-                        </div>
+            <div class="card">
+                <h2>🗓️ Historical Maintenance Ledger: <span class="ledgerIdHeader">-</span></h2>
+                <div class="table-container">
+                    <table id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Current Hours</th>
+                                <th>Target Maint. Hours</th>
+                                <th>Status Logged</th>
+                                <th>Fault Report</th>
+                                <th>Action Taken</th>
+                                <th>Parts Replaced</th>
+                                <th>Technician</th>
+                                <th>Remarks</th>
+                                <th style="min-width: 140px; text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="flex-buttons">
+                    <button class="btn btn-secondary" onclick="exportCSV()">Export Maintenance Log to CSV</button>
+                    <button class="btn btn-warning" onclick="triggerLedgerPrint()">🖨️ Print Historical Ledger</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 Automated Maintenance Metrics Report: <span class="reportIdHeader">-</span></h2>
+                <div class="report-grid">
+                    <div class="report-stat-box">
+                        <label>Total Logged Events</label>
+                        <div id="statTotalEvents">0</div>
+                    </div>
+                    <div class="report-stat-box">
+                        <label>Max Accumulated Runtime</label>
+                        <div id="statMaxHours">0.0 hrs</div>
+                    </div>
+                    <div class="report-stat-box">
+                        <label>Avg Maintenance Interval</label>
+                        <div id="statAvgInterval">0.0 hrs</div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="movementPanel" class="view-panel">
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="showRegistryView()">⬅️ Back to Fleet Registry</button>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Asset Overview (Dispatch Tracking): <span class="activeIdHeader">-</span></h2>
+                <div class="asset-summary">
+                    <div><strong>Equipment Name</strong> <span class="summaryName">-</span></div>
+                    <div><strong>Model No</strong> <span class="summaryModel">-</span></div>
+                    <div><strong>Serial No</strong> <span class="summarySerial">-</span></div>
+                    <div><strong>Current Location</strong> <span class="summaryLocation">-</span></div>
+                    <div><strong>Current Status</strong> <span class="summaryStatus">-</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📦 Record Equipment In / Out Logic</h2>
+                <form id="movementForm" onsubmit="saveMovementLog(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label>Movement Type</label>
+                            <select id="moveType" required>
+                                <option value="In">➡️ Equipment IN (Returned to Yard/Site)</option>
+                                <option value="Out">⬅️ Equipment OUT (Dispatched to Site)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Transfer Date & Time</label>
+                            <input type="datetime-local" id="moveDateTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target Site / Deployment Location</label>
+                        <input type="text" id="moveLocation" placeholder="e.g., Birkat Al Awamer Yard, Dukhan Project Site" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Movement Notes / Purpose</label>
+                        <textarea id="moveNotes" placeholder="Reason for asset dispatch, assignment instructions, etc."></textarea>
+                    </div>
+
+                    <div class="flex-buttons">
+                        <button type="submit" class="btn btn-accent" style="background-color: var(--accent-hover);">Save Movement Dispatch Record</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>🚚 Location Tracking & In/Out Movement History</h2>
+                <div class="table-container">
+                    <table id="movementTable">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Type</th>
+                                <th>Site Location</th>
+                                <th>Notes / Purpose</th>
+                                <th style="text-align: center; width: 90px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="movementTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="flex-buttons">
+                    <button class="btn btn-secondary" onclick="exportMovementCSV()">Export Movements to CSV</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -707,7 +749,7 @@
         </div>
         <div class="form-group">
             <label>Location / Site</label>
-            <input type="text" id="modalAssetLocation" placeholder="e.g., Birkat Al Awamer, Aba Saleel" required>
+            <input type="text" id="modalAssetLocation" placeholder="e.g., Main Yard / Site Project" required>
         </div>
         
         <div class="flex-buttons" style="justify-content: flex-end; margin-top: 24px;">
@@ -718,26 +760,96 @@
 </div>
 
 <script>
-    // Configuration details for JSONbin Cloud
     const BIN_ID = '6a3617d8da38895dfee149a4';
     const MASTER_KEY = '$2a$10$S0kauhvqpdlPsiJnEa5aUOirngO/n7MWnqEHVrJJ9PJhIAKnDLUNm';
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    
+    // Configurable Admin View Password
+    const ADMIN_PASSWORD = 'admin123';
 
     let databaseState = {
         master_assets_registry: {},
         global_status_store: {},
-        historical_logs_store: {}
+        historical_logs_store: {},
+        movement_logs_store: {}
     };
     
     let activeEquipmentId = '';
     let isConnected = false;
+    let isAdmin = false; 
 
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('logDate').valueAsDate = new Date();
+        setMovementDateTimeNow();
         document.getElementById('appContent').style.display = 'block';
         clearMainDashboardDisplay();
         fetchCloudDatabase();
+        updateRoleUI();
     });
+
+    function toggleAdminRole() {
+        if (!isAdmin) {
+            const inputPassword = prompt("🔐 Enter administrator access key password:");
+            if (inputPassword === null) return; // User canceled the dialog
+            
+            if (inputPassword === ADMIN_PASSWORD) {
+                isAdmin = true;
+            } else {
+                alert("❌ Incorrect password. Access denied.");
+                return;
+            }
+        } else {
+            // Drop admin credentials seamlessly when leaving admin mode
+            isAdmin = false;
+        }
+        updateRoleUI();
+    }
+
+    function updateRoleUI() {
+        const toggleBtn = document.getElementById('roleToggleBtn');
+        if (isAdmin) {
+            document.body.classList.add('admin-mode');
+            toggleBtn.innerText = "🔒 Switch to User View";
+            toggleBtn.style.backgroundColor = "var(--primary-light)";
+        } else {
+            document.body.classList.remove('admin-mode');
+            toggleBtn.innerText = "🔓 Switch to Admin View";
+            toggleBtn.style.backgroundColor = "var(--warning)";
+        }
+        if(activeEquipmentId) {
+            renderHistoryLedger();
+            renderMovementLedger();
+        }
+    }
+
+    function setMovementDateTimeNow() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('moveDateTime').value = now.toISOString().slice(0,16);
+    }
+
+    function navigateToView(targetPanel) {
+        if (!activeEquipmentId || !databaseState.master_assets_registry[activeEquipmentId]) {
+            alert('Please select an active equipment row from the registry table first.');
+            return;
+        }
+        
+        document.getElementById('registryPanel').classList.remove('active');
+        document.getElementById('maintenancePanel').classList.remove('active');
+        document.getElementById('movementPanel').classList.remove('active');
+
+        if (targetPanel === 'maintenance') {
+            document.getElementById('maintenancePanel').classList.add('active');
+        } else if (targetPanel === 'movement') {
+            document.getElementById('movementPanel').classList.add('active');
+        }
+    }
+
+    function showRegistryView() {
+        document.getElementById('maintenancePanel').classList.remove('active');
+        document.getElementById('movementPanel').classList.remove('active');
+        document.getElementById('registryPanel').classList.add('active');
+    }
 
     function updateStatusBanner(customText = "", isError = false) {
         const banner = document.getElementById('dbStatusBanner');
@@ -760,19 +872,13 @@
             banner.style.background = "#f0fdf4";
             banner.style.borderColor = "#bbf7d0";
             banner.style.color = "#166534";
-            label.innerHTML = `⚡ <strong>Real-Time Cloud Sync Engaged!</strong> Connected to Bin ID: <strong style="color:#166534;">${BIN_ID}</strong>. ${customText || 'All data changes are auto-saved to the cloud instantly.'}`;
+            label.innerHTML = `⚡ <strong>Real-Time Cloud Sync Engaged!</strong> Connected to Bin ID: <strong>${BIN_ID}</strong>. ${customText || 'All data changes are auto-saved to the cloud instantly.'}`;
             overlay.style.display = 'none';
         }
     }
 
     function refreshSystemDashboardView() {
-        const remainingKeys = Object.keys(databaseState.master_assets_registry || {});
-        if (remainingKeys.length > 0) {
-            selectEquipment(activeEquipmentId || remainingKeys[0]);
-        } else {
-            clearMainDashboardDisplay();
-            renderMasterRegistryTable();
-        }
+        renderMasterRegistryTable();
     }
 
     async function fetchCloudDatabase() {
@@ -781,11 +887,8 @@
         try {
             const response = await fetch(API_URL, {
                 method: 'GET',
-                headers: {
-                    'X-Master-Key': MASTER_KEY
-                }
+                headers: { 'X-Master-Key': MASTER_KEY }
             });
-
             if (!response.ok) throw new Error(`HTTP status processing fault: ${response.status}`);
 
             const result = await response.json();
@@ -794,7 +897,8 @@
             databaseState = {
                 master_assets_registry: parsed.master_assets_registry || {},
                 global_status_store: parsed.global_status_store || {},
-                historical_logs_store: parsed.historical_logs_store || {}
+                historical_logs_store: parsed.historical_logs_store || {},
+                movement_logs_store: parsed.movement_logs_store || {}
             };
 
             isConnected = true;
@@ -818,10 +922,7 @@
                 },
                 body: JSON.stringify(databaseState)
             });
-
             if (!response.ok) throw new Error(`Server write pipeline failure status: ${response.status}`);
-            
-            console.log("Database background cloud auto-save sync complete.");
             updateStatusBanner("Data saved and pushed successfully to your live JSONbin cloud state registry.");
         } catch (err) {
             console.error("Auto-save sync payload to cloud failed:", err);
@@ -833,16 +934,16 @@
         const tbody = document.getElementById('equipmentTableBody');
         tbody.innerHTML = '';
         const registry = databaseState.master_assets_registry || {};
-
         const keys = Object.keys(registry);
+
         if (keys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding: 24px;">No assets registered. Click "Add New Entry" to get started.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding: 24px;">No assets registered. Click "Add New Entry" to get started.</td></tr>`;
             return;
         }
 
+        let itemIndex = 1;
         for (const id of keys) {
             const savedStatus = databaseState.global_status_store[id] || 'Operational';
-            
             let badgeClass = 'badge-operational';
             if (savedStatus === 'Under Maintenance') badgeClass = 'badge-maintenance';
             if (savedStatus === 'Down') badgeClass = 'badge-down';
@@ -852,6 +953,7 @@
             tr.onclick = () => selectEquipment(id);
             
             tr.innerHTML = `
+                <td style="color: var(--text-muted); font-weight: 600;">${itemIndex++}</td>
                 <td><strong>${id}</strong></td>
                 <td>${registry[id].name || 'Industrial Asset'}</td>
                 <td>${registry[id].model || '-'}</td>
@@ -868,16 +970,18 @@
         const query = document.getElementById('fleetSearchInput').value.toLowerCase().trim();
         const rows = document.querySelectorAll('#equipmentTableBody tr');
 
+        let dynamicIndex = 1;
         rows.forEach(row => {
-            if(row.cells.length < 6) return;
-            const assetId = row.cells[0]?.innerText.toLowerCase() || '';
-            const assetName = row.cells[1]?.innerText.toLowerCase() || '';
-            const assetModel = row.cells[2]?.innerText.toLowerCase() || '';
-            const assetSerial = row.cells[3]?.innerText.toLowerCase() || '';
-            const assetLocation = row.cells[4]?.innerText.toLowerCase() || '';
+            if(row.cells.length < 7) return;
+            const assetId = row.cells[1]?.innerText.toLowerCase() || '';
+            const assetName = row.cells[2]?.innerText.toLowerCase() || '';
+            const assetModel = row.cells[3]?.innerText.toLowerCase() || '';
+            const assetSerial = row.cells[4]?.innerText.toLowerCase() || '';
+            const assetLocation = row.cells[5]?.innerText.toLowerCase() || '';
 
             if (assetId.includes(query) || assetName.includes(query) || assetModel.includes(query) || assetSerial.includes(query) || assetLocation.includes(query)) {
                 row.style.display = ""; 
+                row.cells[0].innerText = dynamicIndex++;
             } else {
                 row.style.display = "none"; 
             }
@@ -885,44 +989,33 @@
     }
 
     async function selectEquipment(id) {
-        if (!id || !databaseState.master_assets_registry[id]) {
-            const keys = Object.keys(databaseState.master_assets_registry || {});
-            id = keys.length > 0 ? keys[0] : '';
-        }
+        if (!id || !databaseState.master_assets_registry[id]) return;
         
         activeEquipmentId = id;
         await renderMasterRegistryTable();
-        
-        if (!id) {
-            clearMainDashboardDisplay();
-            return;
-        }
-
         cancelLogEditing();
 
         const currentStatus = databaseState.global_status_store[id] || 'Operational';
         const currentAsset = databaseState.master_assets_registry[id];
 
-        document.getElementById('activeIdHeader').innerText = id;
-        document.getElementById('ledgerIdHeader').innerText = id;
-        document.getElementById('reportIdHeader').innerText = id;
-        document.getElementById('summaryName').innerText = currentAsset.name || 'Industrial Asset';
-        document.getElementById('summaryModel').innerText = currentAsset.model || '-';
-        document.getElementById('summarySerial').innerText = currentAsset.serial || '-';
-        document.getElementById('summaryLocation').innerText = currentAsset.location || '-';
-        document.getElementById('summaryStatus').innerText = currentStatus;
+        document.querySelectorAll('.activeIdHeader').forEach(el => el.innerText = id);
+        document.querySelectorAll('.ledgerIdHeader').forEach(el => el.innerText = id);
+        document.querySelectorAll('.reportIdHeader').forEach(el => el.innerText = id);
+        
+        document.querySelectorAll('.summaryName').forEach(el => el.innerText = currentAsset.name || 'Industrial Asset');
+        document.querySelectorAll('.summaryModel').forEach(el => el.innerText = currentAsset.model || '-');
+        document.querySelectorAll('.summarySerial').forEach(el => el.innerText = currentAsset.serial || '-');
+        document.querySelectorAll('.summaryLocation').forEach(el => el.innerText = currentAsset.location || '-');
+        document.querySelectorAll('.summaryStatus').forEach(el => el.innerText = currentStatus);
+
         document.getElementById('equipmentStatusSelect').value = currentStatus;
 
-        document.getElementById('printID').innerText = id;
-        document.getElementById('printName').innerText = currentAsset.name || 'Industrial Asset';
-        document.getElementById('printModel').innerText = currentAsset.model || '-';
-        document.getElementById('printSerial').innerText = currentAsset.serial || '-';
-        document.getElementById('printLocation').innerText = currentAsset.location || '-';
-
         await renderHistoryLedger();
+        await renderMovementLedger();
     }
 
     function openFleetModal(mode) {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
         const modal = document.getElementById('fleetModal');
         const title = document.getElementById('modalTitle');
         document.getElementById('modalMode').value = mode;
@@ -956,6 +1049,7 @@
     }
 
     async function submitFleetForm() {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
         const mode = document.getElementById('modalMode').value;
         const id = document.getElementById('modalAssetId').value.trim().toUpperCase();
         const name = document.getElementById('modalAssetName').value.trim();
@@ -988,6 +1082,7 @@
     }
 
     async function deleteEquipment() {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
         if (!activeEquipmentId || !databaseState.master_assets_registry[activeEquipmentId]) {
             alert('Select an active machine row from the registry table database list first.');
             return;
@@ -996,38 +1091,27 @@
         if (confirm(`⚠️ Warning! Permanently delete Asset "${activeEquipmentId}"?`)) {
             delete databaseState.global_status_store[activeEquipmentId];
             delete databaseState.historical_logs_store[activeEquipmentId];
+            delete databaseState.movement_logs_store[activeEquipmentId];
             delete databaseState.master_assets_registry[activeEquipmentId];
             
             activeEquipmentId = '';
             refreshSystemDashboardView();
+            showRegistryView();
             await autoSaveToDisk(); 
         }
     }
 
     async function clearMainDashboardDisplay() {
         activeEquipmentId = '';
-        document.getElementById('activeIdHeader').innerText = '-';
-        document.getElementById('ledgerIdHeader').innerText = '-';
-        document.getElementById('reportIdHeader').innerText = '-';
-        document.getElementById('summaryName').innerText = '-';
-        document.getElementById('summaryModel').innerText = '-';
-        document.getElementById('summarySerial').innerText = '-';
-        document.getElementById('summaryLocation').innerText = '-';
-        document.getElementById('summaryStatus').innerText = '-';
+        document.querySelectorAll('.activeIdHeader, .ledgerIdHeader, .reportIdHeader, .summaryName, .summaryModel, .summarySerial, .summaryLocation, .summaryStatus').forEach(el => el.innerText = '-');
         document.getElementById('historyTableBody').innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding: 24px;">No historical logs found.</td></tr>`;
-        
-        document.getElementById('printID').innerText = '-';
-        document.getElementById('printName').innerText = '-';
-        document.getElementById('printModel').innerText = '-';
-        document.getElementById('printSerial').innerText = '-';
-        document.getElementById('printLocation').innerText = '-';
-        
+        document.getElementById('movementTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding: 24px;">No configuration movement tracked.</td></tr>`;
         generateHistoricalReport([]);
     }
 
     function updateLiveStatusField() {
         const selectedStatus = document.getElementById('equipmentStatusSelect').value;
-        document.getElementById('summaryStatus').innerText = selectedStatus;
+        document.querySelectorAll('.summaryStatus').forEach(el => el.innerText = selectedStatus);
     }
 
     function generateActionsFromChecklist() {
@@ -1054,13 +1138,11 @@
     async function renderHistoryLedger() {
         const bodyContainer = document.getElementById('historyTableBody');
         bodyContainer.innerHTML = '';
-
         if (!activeEquipmentId) return;
 
         const records = databaseState.historical_logs_store[activeEquipmentId] || [];
-
         if (records.length === 0) {
-            bodyContainer.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding: 24px;">No historical logs found for this element.</td></tr>`;
+            bodyContainer.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding: 24px;">No historical maintenance records.</td></tr>`;
             generateHistoricalReport([]);
             return;
         }
@@ -1082,14 +1164,42 @@
                 <td>${item.technician}</td>
                 <td><small>${item.remarks || '-'}</small></td>
                 <td style="text-align:center;">
-                    <button class="btn btn-warning btn-sm" onclick="editLogRecord(${index})">✏️ Edit</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteLogRecord(${index})">🗑️ Delete</button>
+                    <button class="btn btn-warning btn-sm admin-only" onclick="editLogRecord(${index})">✏️ Edit</button>
+                    <button class="btn btn-danger btn-sm admin-only" onclick="deleteLogRecord(${index})">🗑️ Delete</button>
+                    ${!isAdmin ? '<span style="color:var(--text-muted); font-size:12px;">Admin Only</span>' : ''}
                 </td>
             `;
             bodyContainer.appendChild(tr);
         });
-
         generateHistoricalReport(records);
+    }
+
+    async function renderMovementLedger() {
+        const bodyContainer = document.getElementById('movementTableBody');
+        bodyContainer.innerHTML = '';
+        if (!activeEquipmentId) return;
+
+        const movements = databaseState.movement_logs_store[activeEquipmentId] || [];
+        if (movements.length === 0) {
+            bodyContainer.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding: 24px;">No spatial deployment transfers found.</td></tr>`;
+            return;
+        }
+
+        movements.forEach((move, index) => {
+            const badgeClass = move.type === 'In' ? 'badge-move-in' : 'badge-move-out';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${move.dateTime.replace('T', ' ')}</td>
+                <td><span class="badge ${badgeClass}">EQUIPMENT ${move.type.toUpperCase()}</span></td>
+                <td><strong>${move.location}</strong></td>
+                <td><small>${move.notes || '-'}</small></td>
+                <td style="text-align:center;">
+                    <button class="btn btn-danger btn-sm admin-only" onclick="deleteMovementRecord(${index})">🗑️ Delete</button>
+                    ${!isAdmin ? '<span style="color:var(--text-muted); font-size:12px;">Admin Only</span>' : ''}
+                </td>
+            `;
+            bodyContainer.appendChild(tr);
+        });
     }
 
     function generateHistoricalReport(records) {
@@ -1111,9 +1221,7 @@
         records.forEach(record => {
             const currentHrs = parseFloat(record.currentHours) || 0;
             const targetHrs = parseFloat(record.targetMaintenanceHours) || 0;
-
             if (currentHrs > maxHours) maxHours = currentHrs;
-
             if (targetHrs > currentHrs) {
                 sumIntervals += (targetHrs - currentHrs);
                 validIntervalCount++;
@@ -1121,7 +1229,6 @@
         });
 
         const averageInterval = validIntervalCount > 0 ? (sumIntervals / validIntervalCount) : 0;
-
         totalEventsEl.innerText = records.length;
         maxHoursEl.innerText = `${maxHours.toFixed(1)} hrs`;
         avgIntervalEl.innerText = `${averageInterval.toFixed(1)} hrs`;
@@ -1129,7 +1236,6 @@
 
     async function saveLog(event) {
         event.preventDefault();
-
         const currentHoursNum = parseFloat(document.getElementById('currentHours').value) || 0;
         const targetHoursNum = parseFloat(document.getElementById('targetMaintenanceHours').value) || 0;
         let selectedStatusValue = document.getElementById('equipmentStatusSelect').value;
@@ -1166,22 +1272,47 @@
         const editIndex = parseInt(document.getElementById('editingLogIndex').value);
 
         if (editIndex > -1) {
+            if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
             currentRecordsList[editIndex] = logDataPacket;
         } else {
             currentRecordsList.push(logDataPacket);
         }
 
         databaseState.global_status_store[activeEquipmentId] = selectedStatusValue;
-        
         cancelLogEditing();
         await selectEquipment(activeEquipmentId);
         await autoSaveToDisk(); 
     }
 
+    async function saveMovementLog(event) {
+        event.preventDefault();
+        if (!activeEquipmentId) return;
+
+        const targetLocation = document.getElementById('moveLocation').value.trim();
+        const movementPacket = {
+            type: document.getElementById('moveType').value,
+            dateTime: document.getElementById('moveDateTime').value,
+            location: targetLocation,
+            notes: document.getElementById('moveNotes').value.trim()
+        };
+
+        if (!databaseState.movement_logs_store[activeEquipmentId]) {
+            databaseState.movement_logs_store[activeEquipmentId] = [];
+        }
+
+        databaseState.movement_logs_store[activeEquipmentId].push(movementPacket);
+        databaseState.master_assets_registry[activeEquipmentId].location = targetLocation;
+
+        document.getElementById('movementForm').reset();
+        setMovementDateTimeNow();
+        await selectEquipment(activeEquipmentId);
+        await autoSaveToDisk();
+    }
+
     async function editLogRecord(index) {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
         const records = databaseState.historical_logs_store[activeEquipmentId] || [];
         const targetedRecord = records[index];
-
         if (!targetedRecord) return;
 
         document.getElementById('editingLogIndex').value = index;
@@ -1239,19 +1370,31 @@
     }
 
     async function deleteLogRecord(index) {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
         let records = databaseState.historical_logs_store[activeEquipmentId] || [];
-
         if (confirm("Delete this log timeline data row?")) {
             records.splice(index, 1);
-            
             let newStatus = 'Operational';
-            if (records.length > 0) {
-                newStatus = records[records.length - 1].status;
-            }
+            if (records.length > 0) newStatus = records[records.length - 1].status;
 
             databaseState.global_status_store[activeEquipmentId] = newStatus;
             await selectEquipment(activeEquipmentId);
             await autoSaveToDisk(); 
+        }
+    }
+
+    async function deleteMovementRecord(index) {
+        if (!isAdmin) { alert('Access Denied: Requires Administrator Privileges.'); return; }
+        let movements = databaseState.movement_logs_store[activeEquipmentId] || [];
+        if (confirm("Delete this physical transfer movement line row permanently?")) {
+            movements.splice(index, 1);
+            if (movements.length > 0) {
+                databaseState.master_assets_registry[activeEquipmentId].location = movements[movements.length - 1].location;
+            } else {
+                databaseState.master_assets_registry[activeEquipmentId].location = "-";
+            }
+            await selectEquipment(activeEquipmentId);
+            await autoSaveToDisk();
         }
     }
 
@@ -1266,10 +1409,28 @@
             csvString += `"${r.date}","${r.currentHours}","${r.targetMaintenanceHours}","${r.status}","${r.faultReport}","${r.serviceAction}","${r.partsReplaced}","${r.technician}","${r.remarks}"\n`;
         });
 
+        downloadCSVFile(csvString, `Maint_Log_${activeEquipmentId}.csv`);
+    }
+
+    function exportMovementCSV() {
+        const movements = databaseState.movement_logs_store[activeEquipmentId] || [];
+        if (movements.length === 0) return;
+
+        let csvString = `ID Number:,${activeEquipmentId}\nAsset Description:,${databaseState.master_assets_registry[activeEquipmentId].name}\nSerial No:,${databaseState.master_assets_registry[activeEquipmentId].serial}\n\n`;
+        csvString += `Date and Time,Movement Type,Target Site Location,Purpose Notes\n`;
+
+        movements.forEach(m => {
+            csvString += `"${m.dateTime.replace('T',' ')}","EQUIPMENT ${m.type.toUpperCase()}","${m.location}","${m.notes}"\n`;
+        });
+
+        downloadCSVFile(csvString, `Movement_Log_${activeEquipmentId}.csv`);
+    }
+
+    function downloadCSVFile(csvString, filename) {
         const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `System_Log_${activeEquipmentId}.csv`);
+        link.setAttribute("download", filename);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1281,7 +1442,6 @@
             alert("The master registry contains no data entries to print.");
             return;
         }
-        
         document.getElementById('printRegistryDate').innerText = new Date().toLocaleString();
         document.body.classList.remove('printing-ledger');
         document.body.classList.add('printing-registry');
@@ -1294,7 +1454,6 @@
             alert("The history ledger contains no logbook data row items to send to the printer engine.");
             return;
         }
-
         document.body.classList.remove('printing-registry');
         document.body.classList.add('printing-ledger');
         window.print();
