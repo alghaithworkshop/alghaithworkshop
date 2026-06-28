@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Al Ghaith CMMS Portal - Read-Only Viewer</title>
+    <title>Al Ghaith CMMS Portal - Viewer Terminal</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" />
@@ -25,32 +25,43 @@
     <div id="print-section" class="hidden p-8 bg-white text-slate-900"></div>
 
     <div id="app-container" class="flex flex-col min-h-screen">
-        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs z-10">
-            <div class="flex items-center space-x-3.5">
-                <img src="alghaithlogo.jpg" alt="Al Ghaith Trading & Industrial Services Logo" class="h-9 w-9 object-contain rounded">
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-bold tracking-tight text-slate-900">Al Ghaith Trading &amp; Industrial Services</span>
+        <!-- HEADER NAV -->
+        <nav class="bg-white border-b border-slate-200 px-4 md:px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between shadow-xs z-20 gap-4">
+            <div class="flex items-center justify-between w-full lg:w-auto">
+                <div class="flex items-center space-x-3.5">
+                    <img src="alghaithlogo.jpg" alt="Al Ghaith Logo" class="h-9 w-9 object-contain rounded">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-bold tracking-tight text-slate-900 max-w-[220px] md:max-w-none block truncate">Al Ghaith Trading &amp; Industrial Services</span>
+                        </div>
+                        <p class="text-xs text-slate-500">Maintenance Management System (Viewer)</p>
                     </div>
-                    <p class="text-xs text-slate-500">Maintenance Management System <span class="text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 ml-1">Read-Only</span></p>
                 </div>
+                <button onclick="toggleMobileSidebar()" class="md:hidden flex items-center text-slate-600 hover:text-slate-900 p-1 rounded border border-slate-200 cursor-pointer">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
             </div>
 
-            <div class="flex items-center space-x-4">
-                <div class="flex items-center space-x-5 text-xs font-code text-slate-600">
+            <!-- Dashboard Stats Metrics Bar -->
+            <div class="w-full lg:w-auto">
+                <div class="grid grid-cols-2 sm:flex sm:items-center gap-3 lg:gap-5 text-xs font-code text-slate-600 bg-slate-50 p-3 lg:p-0 rounded border border-slate-100 lg:border-none lg:bg-transparent">
                     <div>Assets: <span id="stat-fleet-count" class="text-slate-900 font-bold">0</span></div>
                     <div>Work Orders: <span id="stat-wo-count" class="text-slate-900 font-bold">0</span></div>
                     <div>Logs Saved: <span id="stat-log-count" class="text-slate-900 font-bold">0</span></div>
                     <div>Dispatches: <span id="stat-dispatch-count" class="text-slate-900 font-bold">0</span></div>
-                    <div>Technicians: <span id="stat-tech-count" class="text-slate-900 font-bold">0</span></div>
+                    <div class="col-span-2 sm:col-span-1">Technicians: <span id="stat-tech-count" class="text-slate-900 font-bold">0</span></div>
                 </div>
             </div>
         </nav>
 
-        <div class="flex flex-1 overflow-hidden">
-            <aside class="w-64 bg-white border-r border-slate-200 p-4 flex flex-col justify-between shadow-xs">
+        <div class="flex flex-1 overflow-hidden relative">
+            <!-- SIDEBAR -->
+            <aside id="sidebar" class="fixed inset-y-0 left-0 z-30 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 w-64 bg-white border-r border-slate-200 p-4 flex flex-col justify-between shadow-md md:shadow-xs h-full shrink-0">
                 <div class="space-y-1">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Operations Modules</p>
+                    <div class="flex items-center justify-between px-3 mb-4 md:mb-2">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operations Modules</p>
+                        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined text-sm">close</span></button>
+                    </div>
                     
                     <button onclick="setModule('fleet')" id="tab-fleet" class="mod-tab flex items-center space-x-3 w-full px-3 py-2.5 rounded text-sm font-semibold transition bg-slate-900 text-white shadow-xs">
                         <span class="material-symbols-outlined">analytics</span>
@@ -83,7 +94,7 @@
                     </button>
                 </div>
 
-                <div class="p-3 bg-slate-50 rounded border border-slate-200">
+                <div class="p-3 bg-slate-50 rounded border border-slate-200 mt-4">
                     <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Authorization Matrix</div>
                     <div id="connection-badge" class="text-xs text-amber-600 font-medium flex items-center">
                         <span class="h-2 w-2 rounded-full bg-amber-500 mr-2 animate-pulse"></span>
@@ -92,41 +103,49 @@
                 </div>
             </aside>
 
-            <main class="flex-1 p-8 overflow-y-auto">
+            <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="hidden fixed inset-0 bg-slate-900/40 z-20 md:hidden"></div>
+
+            <!-- Workspace Main Pane -->
+            <main class="flex-1 p-4 md:p-8 overflow-y-auto">
                 <div class="flex-1">
+                    
+                    <!-- MASTER FLEET -->
                     <section id="pane-fleet" class="pane-view space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-900 tracking-tight">Master Fleet Registry</h2>
                                 <p class="text-xs text-slate-500">Primary technical index indexed by unique hardware Asset IDs.</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="relative flex items-center">
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <div class="relative flex items-center flex-1">
                                     <span class="material-symbols-outlined text-slate-400 absolute left-2.5 text-lg pointer-events-none">search</span>
-                                    <input type="text" id="in-f-search" oninput="refreshWorkspaceView()" placeholder="Search ID, model, status, location..." class="bg-white border border-slate-300 text-slate-800 rounded text-xs pl-8 pr-3 py-2 focus:outline-none focus:border-slate-900 w-48 md:w-64 shadow-xs">
+                                    <input type="text" id="in-f-search" oninput="refreshWorkspaceView()" placeholder="Search ID, model, status, location..." class="bg-white border border-slate-300 text-slate-800 rounded text-xs pl-8 pr-3 py-2 focus:outline-none focus:border-slate-900 w-full md:w-64 shadow-xs">
                                 </div>
                             </div>
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
-                                        <th class="p-4">Primary ID</th>
-                                        <th class="p-4">Model Number</th>
-                                        <th class="p-4">Equipment Description</th>
-                                        <th class="p-4">Serial Number</th>
-                                        <th class="p-4">Location</th>
-                                        <th class="p-4">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rows-fleet" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse text-xs min-w-[700px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
+                                            <th class="p-4">Primary ID</th>
+                                            <th class="p-4">Model Number</th>
+                                            <th class="p-4">Equipment Description</th>
+                                            <th class="p-4">Serial Number</th>
+                                            <th class="p-4">Location</th>
+                                            <th class="p-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rows-fleet" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- WORK ORDERS -->
                     <section id="pane-wo" class="pane-view space-y-4 hidden">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-900 tracking-tight">Maintenance Work Orders</h2>
                                 <p class="text-xs text-slate-500">Operational tracking and scheduling logs.</p>
@@ -134,57 +153,63 @@
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
-                                        <th class="p-4">Order ID</th>
-                                        <th class="p-4">Equipment Asset</th>
-                                        <th class="p-4">Current Metric</th>
-                                        <th class="p-4">Target Metric</th>
-                                        <th class="p-4">Remaining Hours / Status Info</th>
-                                        <th class="p-4">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rows-wo" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse text-xs min-w-[700px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
+                                            <th class="p-4">Order ID</th>
+                                            <th class="p-4">Equipment Asset</th>
+                                            <th class="p-4">Current Metric</th>
+                                            <th class="p-4">Target Metric</th>
+                                            <th class="p-4">Remaining Hours / Status Info</th>
+                                            <th class="p-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rows-wo" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- LOGS / SERVICE HISTORY -->
                     <section id="pane-log" class="pane-view space-y-4 hidden">
-                        <div class="flex items-center justify-between gap-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-900 tracking-tight">Maintenance Logs & Service History</h2>
                                 <p class="text-xs text-slate-500">Execution records from resolved or active maintenance sequences.</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="relative flex items-center">
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <div class="relative flex items-center flex-1">
                                     <span class="material-symbols-outlined text-slate-400 absolute left-2.5 text-lg pointer-events-none">search</span>
-                                    <input type="text" id="in-l-search" oninput="refreshWorkspaceView()" placeholder="Search logs..." class="bg-white border border-slate-300 text-slate-800 rounded text-xs pl-8 pr-3 py-2 focus:outline-none focus:border-slate-900 w-48 md:w-64 shadow-xs">
+                                    <input type="text" id="in-l-search" oninput="refreshWorkspaceView()" placeholder="Search logs..." class="bg-white border border-slate-300 text-slate-800 rounded text-xs pl-8 pr-3 py-2 focus:outline-none focus:border-slate-900 w-full md:w-64 shadow-xs">
                                 </div>
                             </div>
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
-                                        <th class="p-4">Log ID / Date</th>
-                                        <th class="p-4">Equipment Asset</th>
-                                        <th class="p-4">Interval Bounds</th>
-                                        <th class="p-4">Remaining Before Maint.</th>
-                                        <th class="p-4">Fault Report & Action Taken</th>
-                                        <th class="p-4">Parts & Tech</th>
-                                        <th class="p-4">Asset Status</th>
-                                        <th class="p-4 text-center w-32">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rows-log" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse text-xs min-w-[900px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
+                                            <th class="p-4">Log ID / Date</th>
+                                            <th class="p-4">Equipment Asset</th>
+                                            <th class="p-4">Interval Bounds</th>
+                                            <th class="p-4">Remaining Before Maint.</th>
+                                            <th class="p-4">Fault Report & Action Taken</th>
+                                            <th class="p-4">Parts & Tech</th>
+                                            <th class="p-4">Asset Status</th>
+                                            <th class="p-4 text-center w-28">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rows-log" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- DISPATCH -->
                     <section id="pane-dispatch" class="pane-view space-y-4 hidden">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-900 tracking-tight">In/Out Dispatch Logs</h2>
                                 <p class="text-xs text-slate-500">Mobilization tracking panel.</p>
@@ -192,23 +217,26 @@
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
-                                        <th class="p-4">Dispatch ID</th>
-                                        <th class="p-4">Equipment Asset</th>
-                                        <th class="p-4">Event Type</th>
-                                        <th class="p-4">Destination / Project</th>
-                                        <th class="p-4">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rows-dispatch" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse text-xs min-w-[650px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
+                                            <th class="p-4">Dispatch ID</th>
+                                            <th class="p-4">Equipment Asset</th>
+                                            <th class="p-4">Event Type</th>
+                                            <th class="p-4">Destination / Project</th>
+                                            <th class="p-4">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rows-dispatch" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- TECHNICIANS -->
                     <section id="pane-tech" class="pane-view space-y-4 hidden">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-900 tracking-tight">Technician Profile Directory</h2>
                                 <p class="text-xs text-slate-500">Engineering roster and technical credentials.</p>
@@ -216,20 +244,23 @@
                         </div>
 
                         <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
-                                        <th class="p-4">Tech ID</th>
-                                        <th class="p-4">Full Name</th>
-                                        <th class="p-4">Designation</th>
-                                        <th class="p-4">Contact Info</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rows-tech" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                            </table>
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse text-xs min-w-[600px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold tracking-wide uppercase">
+                                            <th class="p-4">Tech ID</th>
+                                            <th class="p-4">Full Name</th>
+                                            <th class="p-4">Designation</th>
+                                            <th class="p-4">Contact Info</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rows-tech" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </section>
 
+                    <!-- REPORTS -->
                     <section id="pane-reports" class="pane-view space-y-6 hidden">
                         <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                             <div>
@@ -237,19 +268,19 @@
                                 <p class="text-xs text-slate-500">Live operational intelligence breakdowns across registered machinery indices.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-3">
-                                <div class="flex items-center space-x-1.5 bg-white border border-slate-300 rounded px-2.5 py-1.5 shadow-xs">
+                                <div class="flex items-center space-x-1.5 bg-white border border-slate-300 rounded px-2.5 py-1.5 shadow-xs w-full sm:w-auto">
                                     <span class="material-symbols-outlined text-sm text-slate-500">location_on</span>
-                                    <select id="print-location-select" class="text-xs bg-transparent border-none outline-none pr-1 font-semibold text-slate-700 focus:ring-0">
+                                    <select id="print-location-select" class="text-xs bg-transparent border-none outline-none pr-1 font-semibold text-slate-700 focus:ring-0 w-full sm:w-auto">
                                         <option value="ALL">All Locations</option>
                                     </select>
-                                    <button onclick="printFilteredLocationReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] px-3 py-1 rounded transition cursor-pointer shadow-sm">
+                                    <button onclick="printFilteredLocationReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] px-3 py-1 rounded transition cursor-pointer shadow-sm shrink-0">
                                         Print
                                     </button>
                                 </div>
 
-                                <div class="flex items-center space-x-1.5 bg-white border border-slate-300 rounded px-2.5 py-1.5 shadow-xs">
+                                <div class="flex items-center space-x-1.5 bg-white border border-slate-300 rounded px-2.5 py-1.5 shadow-xs w-full sm:w-auto">
                                     <span class="material-symbols-outlined text-sm text-emerald-600">check_circle</span>
-                                    <select id="print-status-select" class="text-xs bg-transparent border-none outline-none pr-1 font-semibold text-slate-700 focus:ring-0">
+                                    <select id="print-status-select" class="text-xs bg-transparent border-none outline-none pr-1 font-semibold text-slate-700 focus:ring-0 w-full sm:w-auto">
                                         <option value="ALL">All Statuses</option>
                                         <option value="Operational">Operational</option>
                                         <option value="In Maintenance">In Maintenance</option>
@@ -257,56 +288,58 @@
                                         <option value="Standby">Standby</option>
                                         <option value="Dispatched">Dispatched</option>
                                     </select>
-                                    <button onclick="printFilteredStatusReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] px-3 py-1 rounded transition cursor-pointer shadow-sm">
+                                    <button onclick="printFilteredStatusReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] px-3 py-1 rounded transition cursor-pointer shadow-sm shrink-0">
                                         Print
                                     </button>
                                 </div>
 
-                                <button onclick="printExecutiveReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded flex items-center space-x-1.5 transition cursor-pointer shadow-sm">
+                                <button onclick="printExecutiveReport()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs px-4 py-2.5 rounded flex items-center justify-center space-x-1.5 transition cursor-pointer shadow-sm w-full sm:w-auto">
                                     <span class="material-symbols-outlined text-sm">print</span>
                                     <span>Print Executive Sheet</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Operational</span>
-                                <span id="rep-stat-operational" class="text-3xl font-black text-emerald-600 mt-2">0</span>
+                                <span id="rep-stat-operational" class="text-2xl md:text-3xl font-black text-emerald-600 mt-2">0</span>
                             </div>
                             <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">In Maintenance</span>
-                                <span id="rep-stat-maintenance" class="text-3xl font-black text-amber-600 mt-2">0</span>
+                                <span id="rep-stat-maintenance" class="text-2xl md:text-3xl font-black text-amber-600 mt-2">0</span>
                             </div>
                             <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Down</span>
-                                <span id="rep-stat-down" class="text-3xl font-black text-rose-600 mt-2">0</span>
+                                <span id="rep-stat-down" class="text-2xl md:text-3xl font-black text-rose-600 mt-2">0</span>
                             </div>
                             <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Dispatched</span>
-                                <span id="rep-stat-dispatched" class="text-3xl font-black text-blue-600 mt-2">0</span>
+                                <span id="rep-stat-dispatched" class="text-2xl md:text-3xl font-black text-blue-600 mt-2">0</span>
                             </div>
-                            <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between">
+                            <div class="bg-white border border-slate-200 rounded p-4 shadow-xs flex flex-col justify-between col-span-2 md:col-span-1">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wide">Standby</span>
-                                <span id="rep-stat-standby" class="text-3xl font-black text-slate-600 mt-2">0</span>
+                                <span id="rep-stat-standby" class="text-2xl md:text-3xl font-black text-slate-600 mt-2">0</span>
                             </div>
                         </div>
 
-                        <div class="bg-white border border-slate-200 rounded shadow-xs p-6 space-y-4">
+                        <div class="bg-white border border-slate-200 rounded shadow-xs p-4 md:p-6 space-y-4">
                             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">Active Fleet Asset Allocation Index</h3>
                             <div class="overflow-hidden">
-                                <table class="w-full text-left border-collapse text-xs">
-                                    <thead>
-                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
-                                            <th class="p-3">Asset ID</th>
-                                            <th class="p-3">Model</th>
-                                            <th class="p-3">Description</th>
-                                            <th class="p-3">Live Location</th>
-                                            <th class="p-3">Live Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="rep-rows-allocation" class="divide-y divide-slate-100 text-slate-700"></tbody>
-                                </table>
+                                <div class="overflow-x-auto w-full">
+                                    <table class="w-full text-left border-collapse text-xs min-w-[650px]">
+                                        <thead>
+                                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
+                                                <th class="p-3">Asset ID</th>
+                                                <th class="p-3">Model</th>
+                                                <th class="p-3">Description</th>
+                                                <th class="p-3">Live Location</th>
+                                                <th class="p-3">Live Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rep-rows-allocation" class="divide-y divide-slate-100 text-slate-700"></tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -342,6 +375,18 @@
         };
 
         let currentActiveModule = "fleet";
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if(sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
 
         window.initDataPipeline = function() {
             db.ref('.info/connected').on('value', (snap) => {
@@ -459,9 +504,106 @@
                 targetTab.classList.remove('text-slate-600', 'hover:bg-slate-50', 'hover:text-slate-900');
                 targetTab.classList.add('bg-slate-900', 'text-white', 'shadow-xs');
             }
+            
+            const sidebar = document.getElementById('sidebar');
+            if(!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+                toggleMobileSidebar();
+            }
+            
             refreshWorkspaceView();
         }
 
+        // --- PRINT SLIP GENERATOR ---
+        function printMaintenanceLog(logId) {
+            const log = memory.maintenanceLogs.find(l => l.id === logId);
+            if (!log) return;
+            const assetInfo = memory.assets.find(a => a.id === log.assetId) || {};
+            
+            const pSec = document.getElementById('print-section');
+            pSec.innerHTML = `
+                <div style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 850px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-b: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px;">
+                        <div>
+                            <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Al Ghaith Trading & Industrial Services</h1>
+                            <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">Technical Mechanical Maintenance & Services Division</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; background-color: #f1f5f9; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; color: #0f172a;">
+                                SERVICE RECORD LEDGER
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin-bottom: 24px; font-size: 12px;">
+                        <div>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Log Certification ID:</strong> <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${log.id}</span></p>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Execution Timestamp:</strong> ${log.date}</p>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Reference Work Order:</strong> <span style="font-family: 'JetBrains Mono', monospace;">${log.woIdRef || 'N/A'}</span></p>
+                        </div>
+                        <div>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Assigned Asset ID:</strong> <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${log.assetId}</span></p>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Model Specification:</strong> ${assetInfo.model || 'N/A'}</p>
+                            <p style="margin: 4px 0;"><strong style="color: #475569;">Serial Index Number:</strong> ${assetInfo.serial || 'N/A'}</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 11px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; text-transform: uppercase; color: #475569; font-weight: 700; border-bottom: 1px solid #cbd5e1;">
+                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Initial Log Metric</th>
+                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Target Limit Threshold</th>
+                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Remaining Operating Delta</th>
+                                <th style="padding: 10px;">Post-Service Operational Status</th>
+                            </tr>
+                        </thead>
+                        <tbody style="font-family: 'JetBrains Mono', monospace; font-weight: 500; color: #334155;">
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">${log.currentMetric}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">${log.targetMetric}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; color: #b45309; font-weight: 700;">${log.remainingHours}</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #059669;">${log.status}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="font-size: 12px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px;">
+                        <div style="border-left: 3px solid #f43f5e; padding-left: 12px;">
+                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #e11d48; letter-spacing: 0.5px;">I. Defective Fault Analysis &amp; Inspection Observations</h4>
+                            <p style="margin: 0; color: #334155; line-height: 1.5; white-space: pre-wrap;">${log.fault}</p>
+                        </div>
+                        
+                        <div style="border-left: 3px solid #10b981; padding-left: 12px;">
+                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #059669; letter-spacing: 0.5px;">II. Corrective Technical Intervention Executed</h4>
+                            <p style="margin: 0; color: #334155; line-height: 1.5; white-space: pre-wrap;">${log.action}</p>
+                        </div>
+
+                        <div style="border-left: 3px solid #64748b; padding-left: 12px;">
+                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #475569; letter-spacing: 0.5px;">III. Consumed Spare Engineering Components &amp; Consumables</h4>
+                            <p style="margin: 0; color: #334155; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">${log.parts}</p>
+                        </div>
+
+                        <div style="border-left: 3px solid #cbd5e1; padding-left: 12px;">
+                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #475569; letter-spacing: 0.5px;">IV. Advisory Remarks &amp; Future Scheduling Notes</h4>
+                            <p style="margin: 0; color: #64748b; line-height: 1.5;">${log.remarks || 'None'}</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 50px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 12px;">
+                        <div>
+                            <p style="margin: 0; color: #64748b;">Responsible Plant Engineer / Technician:</p>
+                            <p style="margin: 16px 0 0 0; font-weight: 700; color: #0f172a;">${log.technician}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; color: #64748b;">Quality Assurance Verification Status:</p>
+                            <p style="margin: 16px 0 0 0; font-weight: 500; color: #475569; font-style: italic;">System Archived Ledger</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.print();
+        }
+
+        // --- WORKSPACE RENDERING PANELS ---
         function refreshWorkspaceView() {
             if (currentActiveModule === "fleet") {
                 const query = document.getElementById('in-f-search').value.toLowerCase();
@@ -558,7 +700,7 @@
                         <td class="p-4 text-slate-600 font-medium">${l.parts}<br/><span class="text-[10px] text-slate-400">Tech: ${l.technician}</span></td>
                         <td class="p-4 font-bold text-slate-900 uppercase text-[10px]">${l.status}</td>
                         <td class="p-4 text-center">
-                            <button onclick="printMaintenanceLog('${l.id}')" class="text-slate-600 hover:text-slate-900 font-semibold border border-slate-200 px-2 py-1 rounded bg-slate-50 transition cursor-pointer">Print Slip</button>
+                            <button onclick="printMaintenanceLog('${l.id}')" class="text-slate-600 hover:text-slate-900 font-semibold border border-slate-200 px-2.5 py-1 bg-slate-50 rounded transition cursor-pointer shadow-xs">Print Slip</button>
                         </td>
                     </tr>
                 `).join('');
@@ -583,7 +725,7 @@
             } else if (currentActiveModule === "tech") {
                 const containerTech = document.getElementById('rows-tech');
                 if (memory.technicians.length === 0) {
-                    containerTech.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 font-medium">Roster clean. No engineers onboarded.</td></tr>`;
+                    containerTech.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-slate-400 font-medium">No engineering profiles onboarded.</td></tr>`;
                     return;
                 }
 
@@ -627,97 +769,7 @@
             }
         }
 
-        function printMaintenanceLog(logId) {
-            const log = memory.maintenanceLogs.find(l => l.id === logId);
-            if (!log) return;
-            const assetInfo = memory.assets.find(a => a.id === log.assetId) || {};
-            
-            const pSec = document.getElementById('print-section');
-            pSec.innerHTML = `
-                <div style="font-family: 'Inter', sans-serif; color: #1e293b; max-width: 850px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-b: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px;">
-                        <div>
-                            <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: -0.5px;">Al Ghaith Trading & Industrial Services</h1>
-                            <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">Technical Mechanical Maintenance & Services Division</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; background-color: #f1f5f9; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 4px; color: #0f172a;">
-                                SERVICE RECORD LEDGER
-                            </span>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin-bottom: 24px; font-size: 12px;">
-                        <div>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Log Certification ID:</strong> <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${log.id}</span></p>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Execution Timestamp:</strong> ${log.date}</p>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Reference Work Order:</strong> <span style="font-family: 'JetBrains Mono', monospace;">${log.woIdRef || 'N/A'}</span></p>
-                        </div>
-                        <div>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Assigned Asset ID:</strong> <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700;">${log.assetId}</span></p>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Model Specification:</strong> ${assetInfo.model || 'N/A'}</p>
-                            <p style="margin: 4px 0;"><strong style="color: #475569;">Serial Index Number:</strong> ${assetInfo.serial || 'N/A'}</p>
-                        </div>
-                    </div>
-
-                    <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 11px; margin-bottom: 24px; border: 1px solid #e2e8f0;">
-                        <thead>
-                            <tr style="background-color: #f1f5f9; text-transform: uppercase; color: #475569; font-weight: 700; border-bottom: 1px solid #cbd5e1;">
-                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Initial Log Metric</th>
-                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Target Limit Threshold</th>
-                                <th style="padding: 10px; border-right: 1px solid #e2e8f0;">Remaining Operating Delta</th>
-                                <th style="padding: 10px;">Post-Service Operational Status</th>
-                            </tr>
-                        </thead>
-                        <tbody style="font-family: 'JetBrains Mono', monospace; font-weight: 500; color: #334155;">
-                            <tr>
-                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">${log.currentMetric}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">${log.targetMetric}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; color: #b45309; font-weight: 700;">${log.remainingHours}</td>
-                                <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #059669;">${log.status}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div style="font-size: 12px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px;">
-                        <div style="border-left: 3px solid #f43f5e; padding-left: 12px;">
-                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #e11d48; letter-spacing: 0.5px;">I. Defective Fault Analysis &amp; Inspection Observations</h4>
-                            <p style="margin: 0; color: #334155; line-height: 1.5; white-space: pre-wrap;">${log.fault}</p>
-                        </div>
-                        
-                        <div style="border-left: 3px solid #10b981; padding-left: 12px;">
-                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #059669; letter-spacing: 0.5px;">II. Corrective Technical Intervention Executed</h4>
-                            <p style="margin: 0; color: #334155; line-height: 1.5; white-space: pre-wrap;">${log.action}</p>
-                        </div>
-
-                        <div style="border-left: 3px solid #64748b; padding-left: 12px;">
-                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #475569; letter-spacing: 0.5px;">III. Consumed Spare Engineering Components &amp; Consumables</h4>
-                            <p style="margin: 0; color: #334155; line-height: 1.5; font-family: 'JetBrains Mono', monospace;">${log.parts}</p>
-                        </div>
-
-                        <div style="border-left: 3px solid #cbd5e1; padding-left: 12px;">
-                            <h4 style="margin: 0 0 4px 0; text-transform: uppercase; font-size: 11px; color: #475569; letter-spacing: 0.5px;">IV. Advisory Remarks &amp; Future Scheduling Notes</h4>
-                            <p style="margin: 0; color: #64748b; line-height: 1.5;">${log.remarks || 'None'}</p>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 50px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 12px;">
-                        <div>
-                            <p style="margin: 0; color: #64748b;">Responsible Plant Engineer / Technician:</p>
-                            <p style="margin: 16px 0 0 0; font-weight: 700; color: #0f172a;">${log.technician}</p>
-                            <div style="width: 200px; border-bottom: 1px solid #94a3b8; margin-top: 4px;"></div>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0; color: #64748b;">Quality Assurance Authorization Sign-Off:</p>
-                            <p style="margin: 16px 0 0 0; font-weight: 500; color: #94a3b8; font-style: italic;">Workshop Operations Manager</p>
-                            <div style="width: 200px; border-bottom: 1px solid #94a3b8; margin-top: 4px; display: inline-block;"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            window.print();
-        }
-
+        // --- PRINT DIAGNOSTIC MATRIX REPORTS ---
         function printFilteredLocationReport() {
             const filterSelect = document.getElementById('print-location-select');
             const targetLocation = filterSelect ? filterSelect.value : "ALL";
@@ -753,7 +805,7 @@
                             <strong>Run Date:</strong> ${new Date().toLocaleString()}
                         </div>
                     </div>
-                    <h3 style="font-size: 14px; text-transform: uppercase; margin-bottom: 15px; tracking: 0.5px; color: #0f172a;">Fleet Deployment & Location Ledger (${filterCount} items)</h3>
+                    <h3 style="font-size: 14px; text-transform: uppercase; margin-bottom: 15px; color: #0f172a;">Fleet Deployment & Location Ledger (${filterCount} items)</h3>
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
                         <thead>
                             <tr style="background-color: #f8fafc; border-b: 1px solid #cbd5e1; text-transform: uppercase; font-size: 11px; color: #475569;">
